@@ -79,7 +79,7 @@ function Range:translateRange( amount )
 end
 
 function Range:getRandomValue()
-	if state == RangeState[ "Unclamped" ] then
+	if self.state == RangeState[ "Unclamped" ] then
 		return self.mean + ( 0.5 - math.random() ) * self.range
 	else
 		return math.random() * self.range
