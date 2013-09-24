@@ -1,0 +1,8 @@
+src/core/agents.dat
+src/core/askvolume.dat
+src/core/bidvolume.dat
+src/core/price.dat
+src/core/profits.dat
+src/core/supplydemand.dat
+src/core/tradevolume.dat
+src/test/luaunit.lua
