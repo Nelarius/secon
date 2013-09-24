@@ -235,32 +235,32 @@ Farmer = Agent:new{
 									},
 					observedTrades = {},
 					inventory = {
-								wood = math.random(0,20),
-								tools = math.random(0,20),
-								ore = math.random(0,20),
-								metal = math.random(0,20),
-								food = math.random(0,20)
+								wood = math.random(0,50),
+								tools = math.random(0,50),
+								ore = math.random(0,50),
+								metal = math.random(0,50),
+								food = math.random(0,50)
 								},
 					commoditySellThreshold = {
-												wood = 15,
-												tools = 15,
-												ore = 15,
-												metal = 15,
-												food = 15
+												wood = 30,
+												tools = 30,
+												ore = 30,
+												metal = 30,
+												food = 30
 												},
 					commodityAcquireThreshold = {
-												wood = 5,
-												tools = 5,
-												ore = 5,
-												metal = 5,
-												food = 5
+												wood = 10,
+												tools = 10,
+												ore = 10,
+												metal = 10,
+												food = 10
 												},
 					inventoryLimit = {
-										wood = 20,
-										tools = 20,
-										ore = 20,
-										metal = 20,
-										food = 20
+										wood = 50,
+										tools = 50,
+										ore = 50,
+										metal = 50,
+										food = 50
 									},
 					money = 35.0,
 					profit = 0.0,
@@ -287,32 +287,32 @@ Woodcutter = Agent:new{
 									},
 					observedTrades = {},
 					inventory = {
-								wood = math.random(0,20),
-								tools = math.random(0,20),
-								ore = math.random(0,20),
-								metal = math.random(0,20),
-								food = math.random(0,20)
+								wood = math.random(0,50),
+								tools = math.random(0,50),
+								ore = math.random(0,50),
+								metal = math.random(0,50),
+								food = math.random(0,50)
 								},
 					commoditySellThreshold = {
-												wood = 15,
-												tools = 15,
-												ore = 15,
-												metal = 15,
-												food = 15
+												wood = 30,
+												tools = 30,
+												ore = 30,
+												metal = 30,
+												food = 30
 												},
 					commodityAcquireThreshold = {
-												wood = 5,
-												tools = 5,
-												ore = 5,
-												metal = 5,
-												food = 5
+												wood = 10,
+												tools = 10,
+												ore = 10,
+												metal = 10,
+												food = 10
 												},
 					inventoryLimit = {
-										wood = 20,
-										tools = 20,
-										ore = 20,
-										metal = 20,
-										food = 20
+										wood = 50,
+										tools = 50,
+										ore = 50,
+										metal = 50,
+										food = 50
 									},
 					money = 35.0,
 					profit = 0.0,
@@ -339,32 +339,32 @@ Miner = Agent:new{
 									},
 					observedTrades = {},
 					inventory = {
-								wood = math.random(0,20),
-								tools = math.random(0,20),
-								ore = math.random(0,20),
-								metal = math.random(0,20),
-								food = math.random(0,20)
+								wood = math.random(0,50),
+								tools = math.random(0,50),
+								ore = math.random(0,50),
+								metal = math.random(0,50),
+								food = math.random(0,50)
 								},
 					commoditySellThreshold = {
-												wood = 15,
-												tools = 15,
-												ore = 15,
-												metal = 15,
-												food = 15
+												wood = 30,
+												tools = 30,
+												ore = 30,
+												metal = 30,
+												food = 30
 												},
 					commodityAcquireThreshold = {
-												wood = 5,
-												tools = 5,
-												ore = 5,
-												metal = 5,
-												food = 5
+												wood = 10,
+												tools = 10,
+												ore = 10,
+												metal = 10,
+												food = 10
 												},
 					inventoryLimit = {
-										wood = 20,
-										tools = 20,
-										ore = 20,
-										metal = 20,
-										food = 20
+										wood = 50,
+										tools = 50,
+										ore = 50,
+										metal = 50,
+										food = 50
 									},
 					money = 35.0,
 					profit = 0.0,
@@ -391,32 +391,32 @@ Refiner = Agent:new{
 									},
 					observedTrades = {},
 					inventory = {
-								wood = math.random(0,20),
-								tools = math.random(0,20),
-								ore = math.random(0,20),
-								metal = math.random(0,20),
-								food = math.random(0,20)
+								wood = math.random(0,50),
+								tools = math.random(0,50),
+								ore = math.random(0,50),
+								metal = math.random(0,50),
+								food = math.random(0,50)
 								},
 					commoditySellThreshold = {
-												wood = 15,
-												tools = 15,
-												ore = 15,
-												metal = 15,
-												food = 15
+												wood = 30,
+												tools = 30,
+												ore = 30,
+												metal = 30,
+												food = 30
 												},
 					commodityAcquireThreshold = {
-												wood = 5,
-												tools = 5,
-												ore = 5,
-												metal = 5,
-												food = 5
+												wood = 10,
+												tools = 10,
+												ore = 10,
+												metal = 10,
+												food = 10
 												},
 					inventoryLimit = {
-										wood = 20,
-										tools = 20,
-										ore = 20,
-										metal = 20,
-										food = 20
+										wood = 50,
+										tools = 50,
+										ore = 50,
+										metal = 50,
+										food = 50
 									},
 					money = 35.0,
 					profit = 0.0,
@@ -443,32 +443,32 @@ Blacksmith = Agent:new{
 									},
 					observedTrades = {},
 					inventory = {
-								wood = math.random(0,20),
-								tools = math.random(0,20),
-								ore = math.random(0,20),
-								metal = math.random(0,20),
-								food = math.random(0,20)
+								wood = math.random(0,50),
+								tools = math.random(0,50),
+								ore = math.random(0,50),
+								metal = math.random(0,50),
+								food = math.random(0,50)
 								},
 					commoditySellThreshold = {
-												wood = 15,
-												tools = 15,
-												ore = 15,
-												metal = 15,
-												food = 15
+												wood = 30,
+												tools = 30,
+												ore = 30,
+												metal = 30,
+												food = 30
 												},
 					commodityAcquireThreshold = {
-												wood = 5,
-												tools = 5,
-												ore = 5,
-												metal = 5,
-												food = 5
+												wood = 10,
+												tools = 10,
+												ore = 10,
+												metal = 10,
+												food = 10
 												},
 					inventoryLimit = {
-										wood = 20,
-										tools = 20,
-										ore = 20,
-										metal = 20,
-										food = 20
+										wood = 50,
+										tools = 50,
+										ore = 50,
+										metal = 50,
+										food = 50
 									},
 					money = 35.0,
 					profit = 0.0,
@@ -478,7 +478,6 @@ Blacksmith = Agent:new{
 					clearingHouse = nil,
 					productionRules = { [1] = toolProduction }
 					}
-
 
 ------------------------------------------------------------------------------
 --Agent association table, used by population

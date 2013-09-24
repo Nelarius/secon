@@ -137,7 +137,7 @@ function ClearingHouse:resolveOffers()
 				
 				if qtyToTrade > 0 then
 					local seller = self.owner:getPopulation():getAgent( ask.agentID )
-					local buyer = self.owner:getPopulation():getAgent( ask.agentID )
+					local buyer = self.owner:getPopulation():getAgent( bid.agentID )
 					
 					seller:subtractFromInventory( c, qtyToTrade )
 					buyer:depositToInventory( c, qtyToTrade )

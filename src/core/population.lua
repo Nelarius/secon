@@ -41,8 +41,6 @@ function Population:update()
 	for t in pairs( agentTypeProfit ) do
 		if self.agentTypes[t] ~= 0 then
 			agentTypeProfit[t] = agentTypeProfit[t] / self.agentTypes[t]
-		else
-			agentTypeProfit[t] = 0
 		end
 		
 		if agentTypeProfit[t] > agentTypeProfit[ self.mostProfitableType ] then

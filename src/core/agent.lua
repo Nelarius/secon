@@ -114,7 +114,7 @@ function Agent:createBid( c )
 	
 	assert( self.priceBelief[c]:getMin() >= 0)
 	assert( self.priceBelief[c]:getMean() >= 0)
-	assert( uPrice > 0)
+	--assert( uPrice > 0)
 	
 	--check that we are not bidding for more than we can pay (based on money possessed currently)
 	if uPrice * toAcquire + self.moneyBidded > self.money and self.moneyBidded < self.money then
@@ -139,7 +139,7 @@ function Agent:createAsk( c )
 	
 	assert( self.priceBelief[c]:getMin() >= 0)
 	assert( self.priceBelief[c]:getMean() >= 0)
-	assert( uPrice > 0 )
+	--assert( uPrice > 0 )
 	
 	self.clearingHouse:postAsk( Offer:new{ agentID = self.agentID, commodity = c,
 											quantity = toSell, unitPrice = uPrice })
@@ -163,10 +163,9 @@ function Agent:acceptBid( c, value )
 	self:observeTrade( c, value )
 	local mean, delta, range = self:getBeliefUpdateData( c )
 	--reinforce belief
-	--move bounds inward by 5% of the mean
+	--move bounds inward by 5% of the range
 	local amount = 1 - 0.1 * self.priceBelief[c]:getMean() / self.priceBelief[c]:getRange()
-	assert( amount > 0 )
-	self.priceBelief[c]:scaleRange( amount )
+	self.priceBelief[c]:scaleRange( 0.95 )
 	
 	if delta < 0 and range / delta > -__SIGNIFICANT then	--significantly overpaid
 		self.priceBelief[c]:translateRange( 0.25 * delta )
@@ -177,11 +176,10 @@ function Agent:acceptAsk( c, value )
 	self:observeTrade( c, value )
 	local mean, delta, range = self:getBeliefUpdateData( c )
 	--reinforce belief
-	--move bounds inward by 5% of the mean
+	--move bounds inward by 5% of the range
 	local amount = 1 - 0.1 * self.priceBelief[c]:getMean() / self.priceBelief[c]:getRange()
-	print("mean = "..self.priceBelief[c]:getMean()..", range = "..self.priceBelief[c]:getRange() )
-	assert( amount > 0 )
-	self.priceBelief[c]:scaleRange( amount )
+	--print("mean = "..self.priceBelief[c]:getMean()..", range = "..self.priceBelief[c]:getRange() )
+	self.priceBelief[c]:scaleRange( 0.95 )
 	
 	if delta > 0 and range / delta < __SIGNIFICANT then	--significantly undersold
 		self.priceBelief[c]:translateRange( 0.25 * delta )
@@ -193,14 +191,14 @@ function Agent:rejectAsk( c )
 	--increase uncertainty in price belief
 	--move bounds outward by 5% of the mean
 	local amount = 1 + 0.05 * self.priceBelief[c]:getMean() / self.priceBelief[c]:getRange()
-	self.priceBelief[c]:scaleRange( amount )
+	self.priceBelief[c]:scaleRange( 1.05 )
 end
 
 function Agent:rejectBid( c )
 	local mean, delta, range = self:getBeliefUpdateData( c )
 	--increase uncertainty in price belief
 	local amount = 1 + 0.05 * self.priceBelief[c]:getMean() / self.priceBelief[c]:getRange()
-	self.priceBelief[c]:scaleRange( amount )
+	self.priceBelief[c]:scaleRange( 1.05 )
 end
 
 function Agent:subtractMoney( amount )

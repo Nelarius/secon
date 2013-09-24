@@ -41,7 +41,13 @@ end
 	range will be clamped to the value which gives a zero minimum.
 ]]
 function Range:scaleRange( amount )
+	--prevent the range from diminishing into nothing
+	if self.range < 0.1 then
+		return
+	end
+	
 	assert( amount > 0 )
+	
 	self.range = self.range * amount
 	
 	if self.mean - 0.5 * self.range < 0 then
