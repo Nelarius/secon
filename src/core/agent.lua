@@ -16,6 +16,7 @@ Agent = {
 			money = 0.0,
 			profit = 0.0,
 			moneyBidded = 0.0,	--used for making sure the agent does not bid for more than it can spend
+			beliefIsUpdated = {},
 			owner = nil,	--is this variable needed?
 			population = nil,
 			clearingHouse = nil,
@@ -32,7 +33,7 @@ __SIGNIFICANT = 0.4
 --[[
 	For anticipating supply & demand imbalance
 ]]
-__SD_IMBALANCE = 0.2
+__SD_IMBALANCE = 0.5
 
 --[[
 	For deciding when to make drastic price belief updates.
@@ -54,9 +55,19 @@ end
 function Agent:performProduction()
 	self.profit = 0.0	--reset the profit accumulator
 	self.moneyBidded = 0.0
+	for c in pairs( self.beliefIsUpdated ) do
+		self.beliefIsUpdated[ c ] = false
+	end
 	
 	for _, rule in ipairs( self.productionRules ) do
 		rule( self )	--call each rule
+	end
+end
+
+function Agent:finally()
+	local tabl = self.clearingHouse:getCommodities()
+	for c in pairs( tabl ) do
+		self:anticipateSupplyDemandChange( c )
 	end
 end
 
@@ -111,7 +122,6 @@ function Agent:createBid( c )
 	local toAcquire = self:determinePurchaseQuantity( c )
 	
 	local uPrice = self.priceBelief[c]:getRandomValue()
-	
 
 	--print("createBid: mean = "..self.priceBelief[c]:getMean()..", range = "..self.priceBelief[c]:getRange()..", uPrice = "..uPrice )
 
@@ -166,6 +176,7 @@ function Agent:getBeliefUpdateData( c )
 end
 
 function Agent:acceptBid( c, value )
+	self.beliefIsUpdated[c] = true
 	self:observeTrade( c, value )
 	local mean, delta, range = self:getBeliefUpdateData( c )
 	--reinforce belief
@@ -179,6 +190,7 @@ function Agent:acceptBid( c, value )
 end
 
 function Agent:acceptAsk( c, value )
+	self.beliefIsUpdated[c] = true
 	self:observeTrade( c, value )
 	local mean, delta, range = self:getBeliefUpdateData( c )
 	--reinforce belief
@@ -193,6 +205,7 @@ function Agent:acceptAsk( c, value )
 end
 
 function Agent:rejectAsk( c )
+	self.beliefIsUpdated[c] = true
 	local mean, delta, range = self:getBeliefUpdateData( c )
 	--increase uncertainty in price belief
 	--move bounds outward by 5% of the mean
@@ -201,10 +214,23 @@ function Agent:rejectAsk( c )
 end
 
 function Agent:rejectBid( c )
+	self.beliefIsUpdated[c] = true
 	local mean, delta, range = self:getBeliefUpdateData( c )
 	--increase uncertainty in price belief
 	local amount = 1 + 0.05 * self.priceBelief[c]:getMean() / self.priceBelief[c]:getRange()
 	self.priceBelief[c]:scaleRange( 1.05 )
+end
+
+function Agent:anticipateSupplyDemandChange( c )
+	if not self.beliefIsUpdated[c] then
+		local ratio = self.clearingHouse:getSupplyDemandRatio( c )
+		if ratio > __SD_IMBALANCE or ratio < - __SD_IMBALANCE then
+			local newMean = ( 1 - ratio ) * self.priceBelief[c]:getMean()
+			local delta = newMean - self.priceBelief[c]:getMean()
+			--scale the delta slightly to prevent drastic shifts in price belief
+			self.priceBelief[c]:translateRange( 0.5 * delta )
+		end
+	end
 end
 
 function Agent:subtractMoney( amount )

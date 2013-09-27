@@ -10,6 +10,7 @@ ClearingHouse = {
 					bidVolumeLogger = LoggerLocator.getLogger( "core/bidvolume.dat" ),
 					askVolumeLogger = LoggerLocator.getLogger( "core/askvolume.dat" ),
 					commodityPool = {},
+					sdRatio = {},
 					owner = nil
 				}
 
@@ -56,7 +57,6 @@ function ClearingHouse:resolveOffers()
 	local price = {}
 	--for calculating supply & demand
 	local askVolume = {}
-	local sdRatio = {}
 	--for keeping track of who has traded & the number of trades
 	local agentsTraded = {}
 	local traderCount = 0
@@ -95,7 +95,7 @@ function ClearingHouse:resolveOffers()
 		bidVolume[c] = 0
 		price[c] = 0
 		askVolume[c] = 0
-		sdRatio[c] = 0
+		self.sdRatio[c] = 0
 		
 		if table.empty( self.bidBook[c] ) and table.empty( self.askBook[c] ) then
 			--print("continuing loop")
@@ -178,11 +178,11 @@ function ClearingHouse:resolveOffers()
 		--calculate supply/demand ratio
 		-- 1: full supply, -1: full demand, 0: balanced
 		if ( askVolume[c] + bidVolume[c] ) ~= 0 then
-			sdRatio[c] = ( askVolume[c] - bidVolume[c] ) / ( askVolume[c] + bidVolume[c] )
+			self.sdRatio[c] = ( askVolume[c] - bidVolume[c] ) / ( askVolume[c] + bidVolume[c] )
 		end
 	end
 	--log the metrics
-	self.sdLogger:log( sdRatio )
+	self.sdLogger:log( self.sdRatio )
 	self.priceLogger:log( self.commodityPool:getCommodityPriceTable() )
 	self.tradeVolumeLogger:log( tradeVolume )
 	self.bidVolumeLogger:log( bidVolume )
@@ -193,12 +193,19 @@ function ClearingHouse:getCommodityMean( c )
 	return self.commodityPool:getCommodityMean( c )
 end
 
+function ClearingHouse:getSupplyDemandRatio( c )
+	return self.sdRatio[c]
+end
+
 require "core/utils"
+
+function ClearingHouse:getCommodities()
+	return self.commodityPool:getCommodities()
+end
 
 function ClearingHouse:setCommodityPool( pool )
 	check( "setCommodityPool", "table", pool, "pool" )
 	self.commodityPool = pool
-	self.commodityPool:getCommodities()
 end
 
 function ClearingHouse:setOwner( owner )

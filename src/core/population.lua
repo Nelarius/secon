@@ -54,6 +54,13 @@ function Population:update()
 	self.agentLogger:log( self.agentTypes )
 end
 
+function Population:analyzeSupplyDemand()
+	for _, a in ipairs( self.agents ) do
+		--no check for nil, as bankruptcies removed
+		a:finally()
+	end
+end
+
 function Population:getMostProfitableAgentType()
 	return self.mostProfitableType
 end

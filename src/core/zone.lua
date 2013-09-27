@@ -29,6 +29,8 @@ function Zone:update()
 	self.clearingHouse:resolveOffers()
 	
 	self.population:removeBankruptcies()
+	--agents will look at the supply and demand after all offers are resolved
+	self.population:analyzeSupplyDemand()
 end
 
 function Zone:getClearingHouse()
