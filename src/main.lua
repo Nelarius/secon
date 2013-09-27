@@ -11,6 +11,11 @@ require "test/test"
 
 require "core/economy"
 
-econ = Economy:new()
+local econ = Economy:new()
+econ:run( 400 )
 
-econ:run( 200 )
+--[[for i = 1,30 do
+	econ = Economy:new()
+	print("running economy #"..i)
+	econ:run( 400 )
+end]]

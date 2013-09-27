@@ -75,11 +75,11 @@ function woodProduction( self )
 		if x < 0.3 then
 			self:consume( "tools", 1 )
 		end
-	elseif hasFood() then
+	--[[elseif hasFood() then
 		--produce 1 unit of wood
 		--consume 1 unit of food
 		self:produce( "wood", 1 )
-		self:consume( "food", 1 )
+		self:consume( "food", 1 )]]
 	else
 		--penalty
 		self:subtractMoney( 2.0 )
@@ -262,7 +262,7 @@ Farmer = Agent:new{
 										metal = 50,
 										food = 50
 									},
-					money = 35.0,
+					money = 20 + 30 * math.random(),
 					profit = 0.0,
 					moneyBidded = 0.0,
 					owner = nil,
@@ -314,7 +314,7 @@ Woodcutter = Agent:new{
 										metal = 50,
 										food = 50
 									},
-					money = 35.0,
+					money = 20 + 30 * math.random(),
 					profit = 0.0,
 					moneyBidded = 0.0,
 					owner = nil,
@@ -366,7 +366,7 @@ Miner = Agent:new{
 										metal = 50,
 										food = 50
 									},
-					money = 35.0,
+					money = 20 + 30 * math.random(),
 					profit = 0.0,
 					moneyBidded = 0.0,
 					owner = nil,
@@ -418,7 +418,7 @@ Refiner = Agent:new{
 										metal = 50,
 										food = 50
 									},
-					money = 35.0,
+					money = 20 + 30 * math.random(),
 					profit = 0.0,
 					moneyBidded = 0.0,
 					owner = nil,
@@ -470,7 +470,7 @@ Blacksmith = Agent:new{
 										metal = 50,
 										food = 50
 									},
-					money = 35.0,
+					money = 20 + 30 * math.random(),
 					profit = 0.0,
 					moneyBidded = 0.0,
 					owner = nil,

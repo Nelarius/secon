@@ -109,12 +109,15 @@ end
 
 function Agent:createBid( c )
 	local toAcquire = self:determinePurchaseQuantity( c )
-	--determine random number in price belief range
+	
 	local uPrice = self.priceBelief[c]:getRandomValue()
 	
+
+	--print("createBid: mean = "..self.priceBelief[c]:getMean()..", range = "..self.priceBelief[c]:getRange()..", uPrice = "..uPrice )
+
 	assert( self.priceBelief[c]:getMin() >= 0)
 	assert( self.priceBelief[c]:getMean() >= 0)
-	--assert( uPrice > 0)
+	assert( uPrice > 0 )
 	
 	--check that we are not bidding for more than we can pay (based on money possessed currently)
 	if uPrice * toAcquire + self.moneyBidded > self.money and self.moneyBidded < self.money then
@@ -137,9 +140,12 @@ function Agent:createAsk( c )
 	
 	local uPrice = self.priceBelief[c]:getRandomValue()
 	
+
+	--print("createAsk: mean = "..self.priceBelief[c]:getMean()..", range = "..self.priceBelief[c]:getRange()..", uPrice = "..uPrice )
+
 	assert( self.priceBelief[c]:getMin() >= 0)
 	assert( self.priceBelief[c]:getMean() >= 0)
-	--assert( uPrice > 0 )
+	assert( uPrice > 0 )
 	
 	self.clearingHouse:postAsk( Offer:new{ agentID = self.agentID, commodity = c,
 											quantity = toSell, unitPrice = uPrice })

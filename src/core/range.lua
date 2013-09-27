@@ -63,9 +63,9 @@ end
 	zero minimum.
 ]]
 function Range:translateRange( amount )
-	if self.mean + amount < 0 then
+	if self.mean + amount <= 0 then
 		self.state = RangeState[ "Clamped" ]
-		self.mean = 0
+		self.mean = 0.1
 		return
 	end
 	
@@ -82,6 +82,6 @@ function Range:getRandomValue()
 	if self.state == RangeState[ "Unclamped" ] then
 		return self.mean + ( 0.5 - math.random() ) * self.range
 	else
-		return math.random() * self.range
+		return math.random() * self.range + 0.002
 	end
 end

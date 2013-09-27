@@ -107,9 +107,11 @@ function ClearingHouse:resolveOffers()
 			--print("rejecting bids, askBook empty")
 			rejectBids( c )
 			--new mean price based only on average bidded price
-			bidAverage[c] = bidAverage[c] / bidVolume[c]
-			price[c] = bidAverage[c]
-			self.commodityPool:setCommodityMean( c, price[c])
+			if bidVolume[c] ~= 0 then
+				bidAverage[c] = bidAverage[c] / bidVolume[c]
+				price[c] = bidAverage[c]
+				self.commodityPool:setCommodityMean( c, price[c])
+			end
 		else
 			--print("resolving offers")
 			table.shuffle( self.bidBook[c] )
@@ -122,11 +124,6 @@ function ClearingHouse:resolveOffers()
 				local ask = table.remove( self.askBook[c] )
 				local qtyToTrade = math.min( bid.quantity, ask.quantity )
 				local clearingPrice = ( bid.unitPrice + ask.unitPrice ) / 2
-				
-				if bid.unitPrice < 0 or ask.unitPrice < 0 then
-					--print("bid.unitPrice = "..bid.unitPrice)
-					--print("ask.unitPrice = "..ask.unitPrice)
-				end
 				
 				--update metrics
 				tradeAverage[c] = tradeAverage[c] + clearingPrice * qtyToTrade
@@ -168,11 +165,6 @@ function ClearingHouse:resolveOffers()
 			rejectAsks( c )
 			rejectBids( c )
 			
-		
-			--calculate supply/demand ratio
-			-- 1: full supply, -1: full demand, 0: balanced
-			sdRatio[c] = ( askVolume[c] - bidVolume[c] ) / ( askVolume[c] + bidVolume[c] )
-			
 			--calculate the price
 			if tradeVolume[c] ~= 0 then
 				tradeAverage[c] = tradeAverage[c] / tradeVolume[c]
@@ -183,13 +175,18 @@ function ClearingHouse:resolveOffers()
 				self.commodityPool:setCommodityMean( c, price[c] )
 			end
 		end
+		--calculate supply/demand ratio
+		-- 1: full supply, -1: full demand, 0: balanced
+		if ( askVolume[c] + bidVolume[c] ) ~= 0 then
+			sdRatio[c] = ( askVolume[c] - bidVolume[c] ) / ( askVolume[c] + bidVolume[c] )
+		end
 	end
 	--log the metrics
 	self.sdLogger:log( sdRatio )
 	self.priceLogger:log( self.commodityPool:getCommodityPriceTable() )
 	self.tradeVolumeLogger:log( tradeVolume )
-	self.bidVolumeLogger:log( askVolume )
-	self.askVolumeLogger:log( bidVolume )
+	self.bidVolumeLogger:log( bidVolume )
+	self.askVolumeLogger:log( askVolume )
 end
 
 function ClearingHouse:getCommodityMean( c )

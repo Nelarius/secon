@@ -9,6 +9,7 @@ Population = {
 				owner = nil,
 				idCounter = 1,
 				bankruptcies = {},
+				extinctTypes = {},
 				profitLogger = LoggerLocator.getLogger( "core/profits.dat" ),
 				agentLogger = LoggerLocator.getLogger( "core/agents.dat" )
 			}
@@ -21,6 +22,7 @@ function Population:new( object )
 end
 
 function Population:update()
+	self.extinctTypeExists = false
 	local agentTypeProfit = {}
 	for t in pairs( self.agentTypes ) do
 		agentTypeProfit[t] = 0.0
@@ -89,6 +91,10 @@ end
 function Population:removeAgent( index )
 	local stringID = self.agents[index].agentType
 	self.agentTypes[stringID] = self.agentTypes[stringID] - 1
+	--if the type goes extinct, then mark it
+	if self.agentTypes[stringID] == 0 then
+		table.insert( self.extinctTypes, stringID )
+	end
 	self.agents[index] = nil
 end
 
@@ -96,16 +102,47 @@ function Population:flagBankruptcy( id )
 	table.insert( self.bankruptcies, id )
 end
 
+--[[
+	Removes bankrupted agents, and with a 0.5 probability replaces the bankrupt agent with,
+	either the currently most profitable agent type, or an agent type which is currently
+	extinct.
+]]
 function Population:removeBankruptcies()
 	while not table.empty( self.bankruptcies ) do
 		local id = table.remove( self.bankruptcies )
 		self:removeAgent( id )
-		local t = self.mostProfitableType
+		local t
+		
+		if #self.extinctTypes ~= 0 then
+			local i = math.random(1, #self.extinctTypes )
+			local x = math.random()
+			t = ( x < 0.7 ) and self.extinctTypes[i] or self.mostProfitableType
+		else
+			t = self.mostProfitableType
+		end
 		check("removeBankruptcies", "string", self.mostProfitableType, "mostProfitableType")
 		--create an agent of the most profitable type
 		--obtain the prototype using the global agentAssociationTable
 		self:createAgent( agentAssociationTable[t], id )
 	end
+end
+
+--[[
+	Returns a random agent type, of which there are currently none in the population.
+]]
+function Population:getExtinctType()
+	local types = {}
+	for t, v in ipairs( self.agentTypes ) do
+		if v == 0 then
+			table.insert( types, t )
+		end
+	end
+	
+	table.shuffle( types )
+	local asdf = table.remove( types )
+	print("Extinct types: "..#types )
+	print("Extinct type "..asdf.."getted.")
+	return asdf
 end
 
 function Population:getAgent( index )
@@ -149,6 +186,8 @@ function DummyPopulation:removeAgent( index ) end
 function DummyPopulation:flagBankruptcy( id ) end
 
 function DummyPopulation:removeBankruptcies() end
+
+function DummyPopulation:getExtinctType() end
 
 function DummyPopulation:getAgent( index ) end
 
