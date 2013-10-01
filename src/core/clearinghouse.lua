@@ -77,7 +77,7 @@ function ClearingHouse:resolveOffers()
 		while not table.empty( self.bidBook[c] ) do
 			local bid = table.remove( self.bidBook[c] )
 			local buyer = self.owner:getPopulation():getAgent( bid.agentID )
-			buyer:rejectAsk( c )
+			buyer:rejectBid( c )
 			
 			if not agentsTraded[ buyer.agentID ] then
 				bidCount = bidCount + 1
