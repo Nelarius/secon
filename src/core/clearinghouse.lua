@@ -24,7 +24,7 @@ end
 function ClearingHouse:postBid( offer )
 	local c = offer.commodity
 	if table.empty( self.bidBook[c] ) then
-		self:createBookEntry( c )
+		self.bidBook[c] = {}
 	end
 	table.insert( self.bidBook[c], offer )
 end
@@ -32,22 +32,12 @@ end
 function ClearingHouse:postAsk( offer )
 	local c = offer.commodity
 	if table.empty( self.askBook[c] ) then
-		self:createBookEntry( c )
+		self.askBook[c] = {}
 	end
 	table.insert( self.askBook[c], offer )
 end
 
-function ClearingHouse:createBookEntry( c )
-	if table.empty(self.bidBook[c] ) then
-		self.bidBook[c] = {}
-	end
-	
-	if table.empty( self.askBook[c] ) then
-		self.askBook[c] = {}
-	end
-end
-
---offer resolution using double auction
+--offer resolution using a double auction
 function ClearingHouse:resolveOffers()
 	--for calculating prices
 	local tradeAverage = {}
@@ -63,16 +53,28 @@ function ClearingHouse:resolveOffers()
 	local bidCount = 0
 	
 	--define helper functions for algorithm
+	
+	--[[
+		The function empties the ask book and rejects each ask in the book.
+	]]
 	local rejectAsks = function( c )
 		while not table.empty( self.askBook[c] ) do
 			local ask = table.remove( self.askBook[c] )
 			local seller = self.owner:getPopulation():getAgent( ask.agentID )
+			
+			if seller.inventory:getInventory( c ) == 0 then
+				print("In rejectAsk: agent "..ask.agentID.." with no "..c.. " inventory caught")
+			end
 			seller:rejectAsk( c )
 			
 			askVolume[c] = askVolume[c] + ask.quantity
 		end
 	end
 	
+	--[[
+		The function empties the bid book and rejects each bid in the book. The function additionally
+		logs the volume & price offered of each bid, in order to perform price calculations.
+	]]
 	local rejectBids = function( c ) 
 		while not table.empty( self.bidBook[c] ) do
 			local bid = table.remove( self.bidBook[c] )
@@ -86,6 +88,28 @@ function ClearingHouse:resolveOffers()
 			bidAverage[c] = bidAverage[c] + bid.quantity * bid.unitPrice
 			bidVolume[c] = bidVolume[c] + bid.quantity
 		end
+	end
+	
+	--[[
+		The function returns an ask and bid, whose member variable quantity is not zero. The function
+		skips the offers whose quantity variable is zero. 
+		
+		If one of the books are emptied during the process, the function returns -1. Otherwise 
+		the function returns the valid ask and bid.
+	]]
+	local getValidOffers = function( c )
+		local ask = table.remove( self.askBook[c] )
+		local bid = table.remove( self.bidBook[c] )
+		while ask.quantity == 0 or bid.quantity == 0 do
+			if ask.quantity == 0 then
+				if table.empty( self.askBook[c] ) then return -1 end
+				ask = table.remove( self.askBook[c] )
+			else
+				if table.empty( self.bidBook[c] ) then return -1 end
+				bid = table.remove( self.bidBook[c] )
+			end
+		end
+		return ask, bid
 	end
 	
 	for c in pairs( self.commodityPool:getCommodities() ) do
@@ -113,15 +137,16 @@ function ClearingHouse:resolveOffers()
 				self.commodityPool:setCommodityMean( c, price[c])
 			end
 		else
-			--print("resolving offers")
 			table.shuffle( self.bidBook[c] )
 			table.shuffle( self.askBook[c] )
 			table.sort( self.bidBook[c], Offer.__lt)
 			table.sort( self.askBook[c], Offer.gt)
 			
 			while ( not table.empty( self.bidBook[c] ) ) and ( not table.empty( self.askBook[c] ) ) do
-				local bid = table.remove( self.bidBook[c] )
-				local ask = table.remove( self.askBook[c] )
+				local ask, bid = getValidOffers( c )
+				--check if no valid offers could be found
+				if ask == -1 then break end
+				
 				local qtyToTrade = math.min( bid.quantity, ask.quantity )
 				local clearingPrice = ( bid.unitPrice + ask.unitPrice ) / 2
 				
@@ -132,32 +157,29 @@ function ClearingHouse:resolveOffers()
 				askVolume[c] = askVolume[c] + ask.quantity
 				tradeVolume[c] = tradeVolume[c] + qtyToTrade
 				
-				if qtyToTrade > 0 then
-					local seller = self.owner:getPopulation():getAgent( ask.agentID )
-					local buyer = self.owner:getPopulation():getAgent( bid.agentID )
+				local seller = self.owner:getPopulation():getAgent( ask.agentID )
+				local buyer = self.owner:getPopulation():getAgent( bid.agentID )
+				
+				if seller.inventory:getInventory( c ) == 0 then
+					print(seller.agentType.." "..ask.agentID.." with no "..c.." inventory caught. Bid was for "..ask.quantity)
+				end
 					
-					seller:subtractFromInventory( c, qtyToTrade )
-					buyer:depositToInventory( c, qtyToTrade )
+				buyer:depositToInventory( c, seller:subtractFromInventory( c, qtyToTrade ) )
 					
-					seller:depositMoney( buyer:subtractMoney( qtyToTrade * clearingPrice) )
+				seller:depositMoney( buyer:subtractMoney( qtyToTrade * clearingPrice) )
 					
-					seller:acceptAsk( c, clearingPrice )
-					buyer:acceptBid( c, clearingPrice )
+				seller:acceptAsk( c, clearingPrice )
+				buyer:acceptBid( c, clearingPrice )
 					
-					if not agentsTraded[ seller.agentID ] then
-						traderCount = traderCount + 1
-						agentsTraded[ seller.agentID ] = true
-					end
+				if not agentsTraded[ seller.agentID ] then
+					traderCount = traderCount + 1
+					agentsTraded[ seller.agentID ] = true
+				end
 					
-					if not agentsTraded[ buyer.agentID ] then
-						traderCount = traderCount + 1
-						bidCount = bidCount + 1
-						agentsTraded[ buyer.agentID ] = true
-					end
-				elseif ask.quantity == 0 then
-					table.remove( self.askBook[c] )
-				elseif bid.quantity == 0 then
-					table.remove( self.bidBook[c] )
+				if not agentsTraded[ buyer.agentID ] then
+					traderCount = traderCount + 1
+					bidCount = bidCount + 1
+					agentsTraded[ buyer.agentID ] = true
 				end
 			end
 			
@@ -174,14 +196,14 @@ function ClearingHouse:resolveOffers()
 				price[c] = fraction * tradeAverage[c] + ( 1 - fraction ) * bidAverage[c]
 				self.commodityPool:setCommodityMean( c, price[c] )
 			end
-		end
+		end	--if
 		--calculate supply/demand ratio
 		-- 1: full supply, -1: full demand, 0: balanced
 		if ( askVolume[c] + bidVolume[c] ) ~= 0 then
 			self.sdRatio[c] = ( askVolume[c] - bidVolume[c] ) / ( askVolume[c] + bidVolume[c] )
 		end
-	end
-	--log the metrics
+	end	--for loop
+	
 	self.sdLogger:log( self.sdRatio )
 	self.priceLogger:log( self.commodityPool:getCommodityPriceTable() )
 	self.tradeVolumeLogger:log( tradeVolume )
@@ -219,3 +241,28 @@ function ClearingHouse:close()
 	self.bidVolumeLogger:close()
 	self.askVolumeLogger:close()
 end
+
+DummyClearinghouse = {}
+
+function DummyClearinghouse:new( object )
+	object = objecr or {}
+	setmetatable( object, self )
+	self.__index = self
+	return object
+end
+
+function DummyClearinghouse:postBid( offer )			end
+
+function DummyClearinghouse:postAsk( offer )			end
+
+function DummyClearinghouse:resolveOffers()				end
+
+function DummyClearinghouse:getCommodityMean()			end
+
+function DummyClearinghouse:getCommodities()			end
+
+function DummyClearinghouse:setCommodityPool( pool )	end
+
+function DummyClearinghouse:setOwner( owner )			end
+
+function DummyClearinghouse:close()						end
