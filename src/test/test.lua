@@ -6,6 +6,7 @@ require "core/fifoq"
 require "core/agent"
 require "core/offer"
 require "core/range"
+require "core/inventory"
 
 --[[
 	This file contains tests for the following classes:
@@ -14,11 +15,10 @@ require "core/range"
 	Agent
 	Offer
 	Range
+	Inventory
 ]]
 
-------------------------------------------------------------------------------
---FifoQ tests
-------------------------------------------------------------------------------
+
 
 TestFifoQEmpty = {}
 
@@ -126,18 +126,21 @@ function TestAgent:setUp()
 		agentType = "",
 		priceBelief = {},
 		observedTrades = {},
-		inventory = { wood = 5 },
+		inventory = Inventory:new{ stock = { wood = 5 }, limit = { wood = 20 } },
 		commoditySellThreshold = { wood = 10 },
 		commodityAcquireThreshold = { wood = 5 },
-		inventoryLimit = { wood = 20 },
 		money = 20.0,
 		profit = 0.0,
 		moneyBidded = 0.0,
-		owner = nil,	--is this variable needed?
-		clearingHouse = nil,
+		beliefIsUpdated = { wood = false },
+		owner = nil,
+		clearingHouse = DummyClearinghouse:new(),
 		population = DummyPopulation:new(),
 		productionRules = {}
 	}
+	
+	local temp = self.agent.inventory:getInventory( "wood" )
+	--assert( nil > 0 )
 	
 	--create dummy clearingHouse
 	local asdf = {}
@@ -175,12 +178,12 @@ end
 
 function TestAgent:test6_DepositToInventoryDepositsCorrectAmount()
 	self.agent:depositToInventory( "wood", 5 )
-	assertEquals( self.agent.inventory.wood, 10 )
+	assertEquals( self.agent.inventory:getInventory( "wood" ), 10 )
 end
 
 function TestAgent:test7_SubtractFromInventorySubtractsCorrectAmountWhenMoreThanEnough()
 	self.agent:subtractFromInventory( "wood", 3 )
-	assertEquals( self.agent.inventory.wood, 2 )
+	assertEquals( self.agent.inventory:getInventory( "wood" ), 2 )
 end
 
 function TestAgent:test8_SubtractFromInventoryReturnsCorrectAmountWhenMoreThanEnough()
@@ -190,7 +193,7 @@ end
 
 function TestAgent:test9_SubtractFromInventorySubtractsCorrectAmountWhenLessThanEnough()
 	self.agent:subtractFromInventory( "wood", 6 )
-	assertEquals( self.agent.inventory.wood, 0 )
+	assertEquals( self.agent.inventory:getInventory( "wood" ), 0 )
 end
 
 function TestAgent:test10_SubtractFromInventoryReturnsCorrectWhenLessThanEnough()
@@ -200,12 +203,12 @@ end
 
 function TestAgent:test11_ProduceAddsToInventory()
 	self.agent:produce( "wood", 5 )
-	assertEquals( self.agent.inventory.wood, 10 )
+	assertEquals( self.agent.inventory:getInventory( "wood" ), 10 )
 end
 
 function TestAgent:test12_ConsumeSubtractsFromInventory()
 	self.agent:consume( "wood", 2 )
-	assertEquals( self.agent.inventory.wood, 3 )
+	assertEquals( self.agent.inventory:getInventory( "wood" ), 3 )
 end
 
 function TestAgent:test13_DetermineSaleQuantityPreventsUnderSelling()
@@ -213,13 +216,13 @@ function TestAgent:test13_DetermineSaleQuantityPreventsUnderSelling()
 	self.agent:observeTrade( "wood", 10.0 )
 	self.agent:observeTrade( "wood", 20.0 )
 	
-	self.agent.inventory.wood = 15
+	self.agent.inventory:setInventory( "wood", 15 )
 	local result = self.agent:determineSaleQuantity( "wood" )
 	assertEquals( result, 3 )
 end
 
 function TestAgent:test14_DeterminePurchaseQuantityPreventsOverPaying()
-	self.agent.inventory.wood = 5
+	self.agent.inventory:setInventory( "wood", 5 )
 	self.agent:observeTrade( "wood", 1.0 )
 	self.agent:observeTrade( "wood", 3.0 )
 	
@@ -228,7 +231,7 @@ function TestAgent:test14_DeterminePurchaseQuantityPreventsOverPaying()
 end
 
 function TestAgent:test15_DetermineSaleQuantityDoesNotRespondToOverPrice()
-	self.agent.inventory.wood = 15
+	self.agent.inventory:setInventory( "wood", 15 )
 	self.agent:observeTrade( "wood", 3.0 )
 	self.agent:observeTrade( "wood", 1.0 )
 	
@@ -237,7 +240,7 @@ function TestAgent:test15_DetermineSaleQuantityDoesNotRespondToOverPrice()
 end
 
 function TestAgent:test16_DeterminePurchaseQuantityDoesNotRespondToUnderPrice()
-	self.agent.inventory.wood = 5
+	self.agent.inventory:setInventory( "wood", 5 )
 	self.agent:observeTrade( "wood", 10.0 )
 	self.agent:observeTrade( "wood", 20.0 )
 	
@@ -285,6 +288,29 @@ function TestAgent:test22_AcceptAskDoesNotTranslateWhenOverSelling()
 	self.agent.priceBelief.wood.mean = 15.0
 	self.agent:acceptAsk( "wood", 5.0 )
 	assertEquals( self.agent.priceBelief.wood:getMean(), 15.0 )
+end
+
+function TestAgent:test23_SubtractFromInventoryAffectsOnlyOneAgent()
+	local anotherAgent = Agent:new
+	{
+		agentID = 0,
+		agentType = "",
+		priceBelief = {},
+		observedTrades = {},
+		inventory = { wood = 5 },
+		commoditySellThreshold = { wood = 10 },
+		commodityAcquireThreshold = { wood = 5 },
+		inventoryLimit = { wood = 20 },
+		money = 20.0,
+		profit = 0.0,
+		moneyBidded = 0.0,
+		owner = nil,	--is this variable needed?
+		clearingHouse = nil,
+		population = DummyPopulation:new(),
+		productionRules = {}
+	}
+	self.agent:subtractFromInventory( "wood", 3 )
+	assertEquals( anotherAgent.inventory.wood, 5 )
 end
 
 ------------------------------------------------------------------------------
@@ -374,7 +400,7 @@ end
 function TestRange:test2_ScaleRangeScalesCorrectWhenHittingZero()
 	self.range:scaleRange( 4.0 )
 	assertEquals( self.range.range, 8.0 )
-	assertEquals( self.range:getMin(), 0 )	--this one fails
+	assertEquals( self.range:getMin(), 0 )
 end
 
 function TestRange:test3_TranslateRangeTranslatesCorrect()
@@ -390,15 +416,16 @@ end
 function TestRange:test5_TranslateRangeMeanDoesNotGoIntoZero()
 	self.range:translateRange( -4.0 )
 	assertEquals( self.range.mean, 0 )
-	assertEquals( self.range:getMin(), 0 )	--this one fails
+	assertEquals( self.range:getMin(), 0 )
 end
 
 function TestRange:test6_GetRandomValueDoesNotReturnNegative()
 	self.range:translateRange( -4 )
+	self.range:translateRange( 4 )
 	
 	for i = 1, 1000 do
 		local x = self.range:getRandomValue()
-		assertEquals( x >= 0, true )
+		assertEquals( x > 0, true )
 	end
 end
 
@@ -418,5 +445,79 @@ function TestRange:test8_ScaleRangeBehavesCorrectlyAfterClamp()
 	assertEquals( self.range:getMin(), 2 )
 end
 
+function TestRange:test9_GetRandomDoesNotReturnZeroWhenScaleOffTheCharts()
+	self.range:scaleRange( 1000 )
+	for i = 1, 1000 do
+		local x = self.range:getRandomValue()
+		assertEquals( x > 0, true)
+	end
+end
+
+------------------------------------------------------------------------------
+--Inventory tests
+------------------------------------------------------------------------------
+
+TestInventory = {}
+
+function TestInventory:setUp()
+	self.inv = Inventory:new{ stock = { wood = 10 }, limit = { wood = 20 } }
+end
+
+function TestInventory:test1_subtractFromInventorySubtractsCorrectly()
+	self.inv:subtractFromInventory( "wood", 5 )
+	assertEquals( self.inv:getInventory( "wood" ), 5 )
+end
+
+function TestInventory:test2_depositToInventoryDepositsCorrectly()
+	self.inv:depositToInventory( "wood", 5 )
+	assertEquals( self.inv:getInventory( "wood" ), 15 )
+end
+
+function TestInventory:test3_depositToInventoryDoesNotDepositOverLimit()
+	--inventory at 10, cannot go over 20
+	self.inv:depositToInventory( "wood", 15 )
+	assertEquals( self.inv:getInventory( "wood" ), 20 )
+end
+
+function TestInventory:test4_subtractFromInventoryDoesNotGoUnderZero()
+	--inventory 10, cannot subtract 15
+	self.inv:subtractFromInventory( "wood", 15 )
+	assertEquals( self.inv:getInventory( "wood" ), 0 )
+end
+
+function TestInventory:test5_setInventoryDoesNotSetOverLimit()
+	--limit is at 20, cannot set 32
+	self.inv:setInventory( "wood", 32 )
+	assertEquals( self.inv:getInventory( "wood" ), 20 )
+end
+
+function TestInventory:test6_setLimitLowerThanInventoryLowersInventory()
+	self.inv:setLimit( "wood", 5)	--inventory is at 10, so should be 5
+	assertEquals( self.inv:getInventory( "wood" ), 5 )
+end
+
+function TestInventory:test7_subtractFromInventoryReturnsCorrectWhenSubtractingBeyondZero()
+	--inventory is at 10, so should be 10
+	local valua = self.inv:subtractFromInventory( "wood", 15 )
+	assertEquals( valua, 10 )
+end
+
+function TestInventory:test8_subtractFromInventoryReturnsCorrectWhenSubtractingLessThanSupply()
+	--inventory is at 10, so should be fine
+	local value = self.inv:subtractFromInventory( "wood", 8 )
+	assertEquals( value, 8 )
+end
+
+function TestInventory:test9_depositDoesNotDepositNegativeAmount()
+	--inventory at 10, so should remain at 10
+	self.inv:depositToInventory( "wood", -2 )
+	assertEquals( self.inv:getInventory( "wood" ), 10 )
+end
+
+function TestInventory:test10_subtractDoesNotSubtractNegativeAmount()
+	--inventory at 10, so should remain at 10
+	self.inv:subtractFromInventory( "wood", -2 )
+	assertEquals( self.inv:getInventory( "wood" ), 10 )
+end
 
 LuaUnit:run()

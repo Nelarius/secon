@@ -82,7 +82,7 @@ function Range:getRandomValue()
 	if self.state == RangeState[ "Unclamped" ] then
 		return self.mean + ( 0.5 - math.random() ) * self.range
 	else
-		--avoid returning zero
+		--avoid returning zero by adding small number
 		return ( math.random() + 0.002 ) * self.range
 	end
 end

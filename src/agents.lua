@@ -1,20 +1,21 @@
 
 require "core/agent"
 require "core/range"
+require "core/inventory"
 
 ------------------------------------------------------------------------------
 --Food production rules
 ------------------------------------------------------------------------------
 function foodProduction( self )
 	local hasWood = function()
-		if self.inventory.wood >= 1 then
+		if self.inventory:getInventory( "wood" ) >= 1 then
 			return true
 		end
 		return false
 	end
 	
 	local hasTools = function()
-		if self.inventory.tools >= 1 then
+		if self.inventory:getInventory( "tools" ) >= 1 then
 			return true
 		end
 	end
@@ -41,7 +42,7 @@ function foodProduction( self )
 	
 	self:checkAcquisitions( "wood", "tools" )
 	
-	if self.inventory.food >= self.commoditySellThreshold.food then
+	if self.inventory:getInventory( "food" ) >= self.commoditySellThreshold.food then
 		self:createAsk( "food" )
 	end
 end
@@ -52,14 +53,14 @@ end
 ------------------------------------------------------------------------------
 function woodProduction( self )
 	local hasFood = function()
-		if self.inventory.food >= 1 then
+		if self.inventory:getInventory( "food" ) >= 1 then
 			return true
 		end
 		return false
 	end
 	
 	local hasTools = function()
-		if self.inventory.tools >= 1 then
+		if self.inventory:getInventory( "tools" ) >= 1 then
 			return true
 		end
 		return false
@@ -87,7 +88,7 @@ function woodProduction( self )
 	
 	self:checkAcquisitions( "food", "tools" )
 	
-	if self.inventory.wood >= self.commoditySellThreshold.wood then
+	if self.inventory:getInventory( "wood" ) >= self.commoditySellThreshold.wood then
 		self:createAsk( "wood" )
 	end
 end
@@ -97,14 +98,14 @@ end
 ------------------------------------------------------------------------------
 function oreProduction( self )
 	local hasFood = function()
-		if self.inventory.food >= 1 then
+		if self.inventory:getInventory( "food" ) >= 1 then
 			return true
 		end
 		return false
 	end
 	
 	local hasTools = function()
-		if self.inventory.tools >= 1 then
+		if self.inventory:getInventory( "tools" ) >= 1 then
 			return true
 		end
 		return false
@@ -132,7 +133,7 @@ function oreProduction( self )
 	
 	self:checkAcquisitions( "food", "tools" )
 	
-	if self.inventory.ore >= self.commoditySellThreshold.ore then
+	if self.inventory:getInventory( "ore" ) >= self.commoditySellThreshold.ore then
 		self:createAsk( "ore" )
 	end
 	
@@ -143,20 +144,27 @@ end
 ------------------------------------------------------------------------------
 function metalProduction( self )
 	local hasFood = function()
-		if self.inventory.food >= 1 then
+		if self.inventory:getInventory( "food" ) >= 1 then
 			return true
 		end
 		return false
 	end
 	
 	local hasTools = function()
-		if self.inventory.tools >= 1 then
+		if self.inventory:getInventory( "tools" ) >= 1 then
 			return true
 		end
 		return false
 	end
 	
-	if hasFood() and hasTools() then
+	local hasOre = function()
+		if self.inventory:getInventory( "ore" ) >= 1 then
+			return true
+		end
+		return false
+	end
+	
+	if hasFood() and hasTools() and hasOre() then
 		--convert all ore into metal
 		--consume 1 unit of food
 		--break tool with 0.3 prob
@@ -166,11 +174,11 @@ function metalProduction( self )
 		if x < 0.3 then
 			self:consume( "tools", 1 )
 		end
-	elseif hasFood() then
+	elseif hasFood() and hasOre() then
 		--convert at most 2 units of ore into metal
 		--consume 1 unit of food
 		self:consume( "food", 1 )
-		local convert = math.min( self.inventory.ore, 2 )
+		local convert = math.min( self.inventory:getInventory( "ore" ), 2 )
 		self:consume( "ore", convert )
 		self:produce( "metal", convert )
 	else
@@ -180,7 +188,7 @@ function metalProduction( self )
 	
 	self:checkAcquisitions( "ore", "food", "tools" )
 	
-	if self.inventory.metal >= self.commoditySellThreshold.metal then
+	if self.inventory:getInventory( "metal" ) >= self.commoditySellThreshold.metal then
 		self:createAsk( "metal" )
 	end
 end
@@ -190,14 +198,14 @@ end
 ------------------------------------------------------------------------------
 function toolProduction( self )
 	local hasFood = function()
-		if self.inventory.food >= 1 then
+		if self.inventory:getInventory( "food" ) >= 1 then
 			return true
 		end
 		return false
 	end
 	
 	local hasMetal = function()
-		if self.inventory.metal >= 1 then
+		if self.inventory:getInventory( "metal" ) >= 1 then
 			return true
 		end
 		return false
@@ -215,304 +223,110 @@ function toolProduction( self )
 	
 	self:checkAcquisitions( "metal", "food" )
 	
-	if self.inventory.tools >= self.commoditySellThreshold.tools then
+	if self.inventory:getInventory( "tools" ) >= self.commoditySellThreshold.tools then
 		self:createAsk( "tools" )
 	end
 end
 
 ------------------------------------------------------------------------------
+--Define base agent, which defines most of the boilerplate variables
+------------------------------------------------------------------------------
+BaseAgent = Agent:new{
+	agentID = 0,
+	agentType = "Farmer",
+	priceBelief = 
+	{
+		wood = Range:new{ mean = 3, range = 2, state = RangeState[ "Unclamped" ] },
+		tools = Range:new{ mean = 3, range = 2, state = RangeState[ "Unclamped" ]},
+		ore = Range:new{ mean = 3, range = 2, state = RangeState[ "Unclamped" ]},
+		metal = Range:new{ mean = 3, range = 2, state = RangeState[ "Unclamped" ]},
+		food = Range:new{ mean = 3, range = 2, state = RangeState[ "Unclamped" ] }
+	},
+	observedTrades = {},
+	inventory = Inventory:new{
+		stock = 
+		{
+			wood = math.random(0,50),
+			tools = math.random(0,50),
+			ore = math.random(0,50),
+			metal = math.random(0,50),
+			food = math.random(0,50)
+		},
+		limit = 
+		{
+			wood = 50,
+			tools = 50,
+			ore = 50,
+			metal = 50,
+			food = 50
+		}
+	},
+	commoditySellThreshold = 
+	{
+		wood = 30,
+		tools = 30,
+		ore = 30,
+		metal = 30,
+		food = 30
+	},
+	commodityAcquireThreshold = 
+	{
+		wood = 10,
+		tools = 10,
+		ore = 10,
+		metal = 10,
+		food = 10
+	},
+	money = 20 + 30 * math.random(),
+	profit = 0.0,
+	moneyBidded = 0.0,
+	beliefIsUpdated = 
+	{
+		wood = false,
+		tools = false,
+		ore = false,
+		metal = false,
+		food = false
+	},
+	owner = nil,
+	population = nil,
+	clearingHouse = nil,
+	productionRules = {  }	--this must be set separately
+}
+
+------------------------------------------------------------------------------
 --Farmer parameters
 ------------------------------------------------------------------------------
-Farmer = Agent:new{
-					agentID = 0,
-					agentType = "Farmer",
-					priceBelief = {
-									wood = Range:new{ mean = 3, range = 2, state = RangeState[ "Unclamped" ] },
-									tools = Range:new{ mean = 3, range = 2, state = RangeState[ "Unclamped" ]},
-									ore = Range:new{ mean = 3, range = 2, state = RangeState[ "Unclamped" ]},
-									metal = Range:new{ mean = 3, range = 2, state = RangeState[ "Unclamped" ]},
-									food = Range:new{ mean = 3, range = 2, state = RangeState[ "Unclamped" ] }
-									},
-					observedTrades = {},
-					inventory = {
-								wood = math.random(0,50),
-								tools = math.random(0,50),
-								ore = math.random(0,50),
-								metal = math.random(0,50),
-								food = math.random(0,50)
-								},
-					commoditySellThreshold = {
-												wood = 30,
-												tools = 30,
-												ore = 30,
-												metal = 30,
-												food = 30
-												},
-					commodityAcquireThreshold = {
-												wood = 10,
-												tools = 10,
-												ore = 10,
-												metal = 10,
-												food = 10
-												},
-					inventoryLimit = {
-										wood = 50,
-										tools = 50,
-										ore = 50,
-										metal = 50,
-										food = 50
-									},
-					money = 20 + 30 * math.random(),
-					profit = 0.0,
-					moneyBidded = 0.0,
-					beliefIsUpdated = {
-										wood = false,
-										tools = false,
-										ore = false,
-										metal = false,
-										food = false
-										},
-					owner = nil,
-					population = nil,
-					clearingHouse = nil,
-					productionRules = { [1] = foodProduction }
-					}
+Farmer = BaseAgent:new()
+Farmer.productionRules = { [1] = foodProduction }
 					
 					
 ------------------------------------------------------------------------------
 --Woodcutter parameters
 ------------------------------------------------------------------------------
-Woodcutter = Agent:new{
-					agentID = 0,
-					agentType = "Woodcutter",
-					priceBelief = {
-									wood = Range:new{ mean = 3, range = 2, state = RangeState[ "Unclamped" ] },
-									tools = Range:new{ mean = 3, range = 2, state = RangeState[ "Unclamped" ]},
-									ore = Range:new{ mean = 3, range = 2, state = RangeState[ "Unclamped" ]},
-									metal = Range:new{ mean = 3, range = 2, state = RangeState[ "Unclamped" ]},
-									food = Range:new{ mean = 3, range = 2, state = RangeState[ "Unclamped" ] }
-									},
-					observedTrades = {},
-					inventory = {
-								wood = math.random(0,50),
-								tools = math.random(0,50),
-								ore = math.random(0,50),
-								metal = math.random(0,50),
-								food = math.random(0,50)
-								},
-					commoditySellThreshold = {
-												wood = 30,
-												tools = 30,
-												ore = 30,
-												metal = 30,
-												food = 30
-												},
-					commodityAcquireThreshold = {
-												wood = 10,
-												tools = 10,
-												ore = 10,
-												metal = 10,
-												food = 10
-												},
-					inventoryLimit = {
-										wood = 50,
-										tools = 50,
-										ore = 50,
-										metal = 50,
-										food = 50
-									},
-					money = 20 + 30 * math.random(),
-					profit = 0.0,
-					moneyBidded = 0.0,
-					beliefIsUpdated = {
-										wood = false,
-										tools = false,
-										ore = false,
-										metal = false,
-										food = false
-										},
-					owner = nil,
-					population = nil,
-					clearingHouse = nil,
-					productionRules = { [1] = woodProduction }
-					}
+Woodcutter = BaseAgent:new()
+Woodcutter.productionRules = { [1] = woodProduction }
 					
 					
 ------------------------------------------------------------------------------
 --Miner parameters
 ------------------------------------------------------------------------------
-Miner = Agent:new{
-					agentID = 0,
-					agentType = "Miner",
-					priceBelief = {
-									wood = Range:new{ mean = 3, range = 2, state = RangeState[ "Unclamped" ] },
-									tools = Range:new{ mean = 3, range = 2, state = RangeState[ "Unclamped" ]},
-									ore = Range:new{ mean = 3, range = 2, state = RangeState[ "Unclamped" ]},
-									metal = Range:new{ mean = 3, range = 2, state = RangeState[ "Unclamped" ]},
-									food = Range:new{ mean = 3, range = 2, state = RangeState[ "Unclamped" ] }
-									},
-					observedTrades = {},
-					inventory = {
-								wood = math.random(0,50),
-								tools = math.random(0,50),
-								ore = math.random(0,50),
-								metal = math.random(0,50),
-								food = math.random(0,50)
-								},
-					commoditySellThreshold = {
-												wood = 30,
-												tools = 30,
-												ore = 30,
-												metal = 30,
-												food = 30
-												},
-					commodityAcquireThreshold = {
-												wood = 10,
-												tools = 10,
-												ore = 10,
-												metal = 10,
-												food = 10
-												},
-					inventoryLimit = {
-										wood = 50,
-										tools = 50,
-										ore = 50,
-										metal = 50,
-										food = 50
-									},
-					money = 20 + 30 * math.random(),
-					profit = 0.0,
-					moneyBidded = 0.0,
-					beliefIsUpdated = {
-										wood = false,
-										tools = false,
-										ore = false,
-										metal = false,
-										food = false
-										},
-					owner = nil,
-					population = nil,
-					clearingHouse = nil,
-					productionRules = { [1] = oreProduction }
-					}
+Miner = BaseAgent:new()
+Miner.productionRules = { [1] = oreProduction }
 
 					
 ------------------------------------------------------------------------------
 --Refiner parameters
 ------------------------------------------------------------------------------
-Refiner = Agent:new{
-					agentID = 0,
-					agentType = "Refiner",
-					priceBelief = {
-									wood = Range:new{ mean = 3, range = 2, state = RangeState[ "Unclamped" ] },
-									tools = Range:new{ mean = 3, range = 2, state = RangeState[ "Unclamped" ]},
-									ore = Range:new{ mean = 3, range = 2, state = RangeState[ "Unclamped" ]},
-									metal = Range:new{ mean = 3, range = 2, state = RangeState[ "Unclamped" ]},
-									food = Range:new{ mean = 3, range = 2, state = RangeState[ "Unclamped" ] }
-									},
-					observedTrades = {},
-					inventory = {
-								wood = math.random(0,50),
-								tools = math.random(0,50),
-								ore = math.random(0,50),
-								metal = math.random(0,50),
-								food = math.random(0,50)
-								},
-					commoditySellThreshold = {
-												wood = 30,
-												tools = 30,
-												ore = 30,
-												metal = 30,
-												food = 30
-												},
-					commodityAcquireThreshold = {
-												wood = 10,
-												tools = 10,
-												ore = 10,
-												metal = 10,
-												food = 10
-												},
-					inventoryLimit = {
-										wood = 50,
-										tools = 50,
-										ore = 50,
-										metal = 50,
-										food = 50
-									},
-					money = 20 + 30 * math.random(),
-					profit = 0.0,
-					moneyBidded = 0.0,
-					beliefIsUpdated = {
-										wood = false,
-										tools = false,
-										ore = false,
-										metal = false,
-										food = false
-										},
-					owner = nil,
-					population = nil,
-					clearingHouse = nil,
-					productionRules = { [1] = metalProduction }
-					}
+Refiner = BaseAgent:new()
+Refiner.productionRules = { [1] = metalProduction }
 					
 			
 ------------------------------------------------------------------------------
 --Blacksmith parameters
 ------------------------------------------------------------------------------
-Blacksmith = Agent:new{
-					agentID = 0,
-					agentType = "Blacksmith",
-					priceBelief = {
-									wood = Range:new{ mean = 3, range = 2, state = RangeState[ "Unclamped" ] },
-									tools = Range:new{ mean = 3, range = 2, state = RangeState[ "Unclamped" ]},
-									ore = Range:new{ mean = 3, range = 2, state = RangeState[ "Unclamped" ]},
-									metal = Range:new{ mean = 3, range = 2, state = RangeState[ "Unclamped" ]},
-									food = Range:new{ mean = 3, range = 2, state = RangeState[ "Unclamped" ] }
-									},
-					observedTrades = {},
-					inventory = {
-								wood = math.random(0,50),
-								tools = math.random(0,50),
-								ore = math.random(0,50),
-								metal = math.random(0,50),
-								food = math.random(0,50)
-								},
-					commoditySellThreshold = {
-												wood = 30,
-												tools = 30,
-												ore = 30,
-												metal = 30,
-												food = 30
-												},
-					commodityAcquireThreshold = {
-												wood = 10,
-												tools = 10,
-												ore = 10,
-												metal = 10,
-												food = 10
-												},
-					inventoryLimit = {
-										wood = 50,
-										tools = 50,
-										ore = 50,
-										metal = 50,
-										food = 50
-									},
-					money = 20 + 30 * math.random(),
-					profit = 0.0,
-					moneyBidded = 0.0,
-					beliefIsUpdated = {
-										wood = false,
-										tools = false,
-										ore = false,
-										metal = false,
-										food = false
-										},
-					owner = nil,
-					population = nil,
-					clearingHouse = nil,
-					productionRules = { [1] = toolProduction }
-					}
+Blacksmith = BaseAgent:new()
+Blacksmith.productionRules = { [1] = toolProduction }
 
 ------------------------------------------------------------------------------
 --Agent association table, used by population
