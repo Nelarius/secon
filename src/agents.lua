@@ -233,7 +233,7 @@ end
 ------------------------------------------------------------------------------
 BaseAgent = Agent:new{
 	agentID = 0,
-	agentType = "Farmer",
+	agentType = " ",	--this must be set separately
 	priceBelief = 
 	{
 		wood = Range:new{ mean = 3, range = 2, state = RangeState[ "Unclamped" ] },
@@ -298,6 +298,7 @@ BaseAgent = Agent:new{
 --Farmer parameters
 ------------------------------------------------------------------------------
 Farmer = BaseAgent:new()
+Farmer.agentType = "Farmer"
 Farmer.productionRules = { [1] = foodProduction }
 					
 					
@@ -305,6 +306,7 @@ Farmer.productionRules = { [1] = foodProduction }
 --Woodcutter parameters
 ------------------------------------------------------------------------------
 Woodcutter = BaseAgent:new()
+Woodcutter.agentType = "Woodcutter"
 Woodcutter.productionRules = { [1] = woodProduction }
 					
 					
@@ -312,6 +314,7 @@ Woodcutter.productionRules = { [1] = woodProduction }
 --Miner parameters
 ------------------------------------------------------------------------------
 Miner = BaseAgent:new()
+Miner.agentType = "Miner"
 Miner.productionRules = { [1] = oreProduction }
 
 					
@@ -319,6 +322,7 @@ Miner.productionRules = { [1] = oreProduction }
 --Refiner parameters
 ------------------------------------------------------------------------------
 Refiner = BaseAgent:new()
+Refiner.agentType = "Refiner"
 Refiner.productionRules = { [1] = metalProduction }
 					
 			
@@ -326,6 +330,7 @@ Refiner.productionRules = { [1] = metalProduction }
 --Blacksmith parameters
 ------------------------------------------------------------------------------
 Blacksmith = BaseAgent:new()
+Blacksmith.agentType = "Blacksmith"
 Blacksmith.productionRules = { [1] = toolProduction }
 
 ------------------------------------------------------------------------------
