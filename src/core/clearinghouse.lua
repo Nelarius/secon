@@ -142,6 +142,15 @@ function ClearingHouse:resolveOffers()
 			table.sort( self.bidBook[c], Offer.__lt)
 			table.sort( self.askBook[c], Offer.gt)
 			
+			print("--------------BIDS--------------")
+			for _, v in ipairs( self.bidBook[c] ) do
+				print("agentID = "..v.agentID.." commodity = "..v.commodity.." quantity = "..v.quantity.." unitPrice = "..v.unitPrice)
+			end
+			print("--------------ASKS--------------")
+			for _, v in ipairs( self.askBook[c] ) do
+				print("agentID = "..v.agentID.." commodity = "..v.commodity.." quantity = "..v.quantity.." unitPrice = "..v.unitPrice)
+			end
+			
 			while ( not table.empty( self.bidBook[c] ) ) and ( not table.empty( self.askBook[c] ) ) do
 				local ask, bid = getValidOffers( c )
 				--check if no valid offers could be found
@@ -152,10 +161,10 @@ function ClearingHouse:resolveOffers()
 				
 				--update metrics
 				tradeAverage[c] = tradeAverage[c] + clearingPrice * qtyToTrade
-				bidAverage[c] = bidAverage[c] + bid.unitPrice * bid.quantity
-				bidVolume[c] = bidVolume[c] + bid.quantity
-				askVolume[c] = askVolume[c] + ask.quantity
-				tradeVolume[c] = tradeVolume[c] + qtyToTrade
+				bidAverage[c] 	= bidAverage[c] + bid.unitPrice * bid.quantity
+				bidVolume[c] 	= bidVolume[c] + bid.quantity
+				askVolume[c] 	= askVolume[c] + ask.quantity
+				tradeVolume[c] 	= tradeVolume[c] + qtyToTrade
 				
 				local seller = self.owner:getPopulation():getAgent( ask.agentID )
 				local buyer = self.owner:getPopulation():getAgent( bid.agentID )

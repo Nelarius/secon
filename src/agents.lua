@@ -34,7 +34,7 @@ function foodProduction( self )
 		--produce 2 units food
 		--consume 1 unit wood
 		self:produce( "food", 2 )
-		self:consume( "wood", 1 )
+		self:consume( "wood", 1, "foodProduction" )
 	else
 		--penalty for idling
 		self:subtractMoney( 2.0 )
@@ -229,6 +229,22 @@ function toolProduction( self )
 end
 
 ------------------------------------------------------------------------------
+--New constructor which randomizes each object's inventory
+------------------------------------------------------------------------------
+randomizerConstructor = function( self, object )
+	object = object or {}
+	setmetatable( object, self )
+	self.__index = self
+	object.inventory:setInventory( "food", math.random(0, 50) )
+	object.inventory:setInventory( "wood", math.random(0, 50) )
+	object.inventory:setInventory( "ore", math.random(0, 50) )
+	object.inventory:setInventory( "metal", math.random(0, 50) )
+	object.inventory:setInventory( "tools", math.random(0, 50) )
+	return object
+end
+
+
+------------------------------------------------------------------------------
 --Define base agent, which defines most of the boilerplate variables
 ------------------------------------------------------------------------------
 BaseAgent = Agent:new{
@@ -293,6 +309,8 @@ BaseAgent = Agent:new{
 	clearingHouse = nil,
 	productionRules = {  }	--this must be set separately
 }
+
+BaseAgent.new = randomizerConstructor
 
 ------------------------------------------------------------------------------
 --Farmer parameters
