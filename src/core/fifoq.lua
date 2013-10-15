@@ -145,3 +145,10 @@ end
 function FifoQ:getMax()
 	return self.max
 end
+
+function FifoQ:isEmpty()
+	if self.count >= 2 then
+		return false
+	end
+	return true
+end
