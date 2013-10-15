@@ -12,3 +12,11 @@ src/testing.lua
 src/linecount.lua
 bad_data.png
 bizarre_production.png
+report.lyx
+report.lyx~
+agents.eps
+agents.png
+agents.log
+price.eps
+agents_ore_shortage.eps
+price_ore_shortage.eps
