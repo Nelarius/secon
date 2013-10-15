@@ -76,11 +76,6 @@ function woodProduction( self )
 		if x < 0.3 then
 			self:consume( "tools", 1 )
 		end
-	--[[elseif hasFood() then
-		--produce 1 unit of wood
-		--consume 1 unit of food
-		self:produce( "wood", 1 )
-		self:consume( "food", 1 )]]
 	else
 		--penalty
 		self:subtractMoney( 2.0 )
@@ -115,7 +110,7 @@ function oreProduction( self )
 		--produce 4 units of ore
 		--consume 1 unit of food
 		--break tool with prob 0.5
-		self:produce( "ore", 4 )
+		self:produce( "ore", self.clearingHouse:getCommodity( "ore", 4 ) )
 		self:consume( "food", 1 )
 		local x = math.random()
 		if x < 0.5 then
@@ -124,7 +119,7 @@ function oreProduction( self )
 	elseif hasFood() then
 		--produce 2 units of ore
 		--consume 1 unit of food
-		self:produce( "ore", 4 )
+		self:produce( "ore", self.clearingHouse:getCommodity( "ore", 4 ) )
 		self:consume( "food", 1 )
 	else
 		--penalty
@@ -256,7 +251,7 @@ agentConstructor = function( self, object )
 		{
 			wood = math.random(0,50),
 			tools = math.random(0,50),
-			ore = math.random(0,50),
+			ore = 0,	--math.random(0,50),
 			metal = math.random(0,50),
 			food = math.random(0,50)
 		},

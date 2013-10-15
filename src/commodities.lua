@@ -18,11 +18,11 @@
 
 local commodityPool = {}
 
-commodityPool.wood = 1000
-commodityPool.food = 1000
+commodityPool.wood = 10000
+commodityPool.food = 10000
 commodityPool.ore = 1000
-commodityPool.metal = 1000
-commodityPool.tools = 1000
+commodityPool.metal = 10000
+commodityPool.tools = 10000
 
 --define initial prices for the commodities
 local commodityPrice = {}

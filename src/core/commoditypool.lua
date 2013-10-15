@@ -14,7 +14,7 @@ function CommodityPool:getCommodities()
 end
 
 function CommodityPool:getCommodity( c, amount )
-	return self:__getInfCommodity( c, amount )
+	return self:__getFinCommodity( c, amount )
 end
 
 function CommodityPool:setCommodityPool( pTable )

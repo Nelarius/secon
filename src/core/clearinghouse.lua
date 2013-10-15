@@ -223,6 +223,10 @@ function ClearingHouse:getCommodities()
 	return self.commodityPool:getCommodities()
 end
 
+function ClearingHouse:getCommodity( c, amount )
+	return self.commodityPool:getCommodity( c, amount )
+end
+
 function ClearingHouse:setCommodityPool( pool )
 	check( "setCommodityPool", "table", pool, "pool" )
 	self.commodityPool = pool

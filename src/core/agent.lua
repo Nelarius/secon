@@ -158,9 +158,10 @@ function Agent:createAsk( c )
 	
 	local uPrice = self.priceBelief[c]:getRandomValue()
 	
-
-	self.clearingHouse:postAsk( Offer:new{ agentID = self.agentID, commodity = c,
-											quantity = toSell, unitPrice = uPrice } )
+	if toSell > 0 then
+		self.clearingHouse:postAsk( Offer:new{ agentID = self.agentID, commodity = c,
+		quantity = toSell, unitPrice = uPrice } )
+	end
 end
 
 function Agent:observeTrade( c, value )
@@ -236,7 +237,6 @@ function Agent:rejectBid( c )
 end
 
 function Agent:anticipateSupplyDemandChange( c )
-	local temp = self.priceBelief[c]:getMean()
 	if not self.beliefIsUpdated[c] then
 		local ratio = self.clearingHouse:getSupplyDemandRatio( c )
 		if ratio > __SD_IMBALANCE or ratio < - __SD_IMBALANCE then
