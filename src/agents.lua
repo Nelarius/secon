@@ -143,6 +143,11 @@ end
 --Metal production rules
 ------------------------------------------------------------------------------
 function metalProduction( self )
+	if self.agentID == 67 then
+		--print("before production: metal = "..self.inventory:getInventory("metal").." ore = "..self.inventory:getInventory("ore"))
+		--print("food = "..self.inventory:getInventory("food")..", tools = "..self.inventory:getInventory("tools"))
+	end
+	
 	local hasFood = function()
 		if self.inventory:getInventory( "food" ) >= 1 then
 			return true
@@ -186,6 +191,11 @@ function metalProduction( self )
 		self:subtractMoney( 2.0 )
 	end
 	
+	if self.agentID == 67 then
+		--print("after production: metal = "..self.inventory:getInventory("metal").." ore = "..self.inventory:getInventory("ore"))
+		--print("food = "..self.inventory:getInventory("food")..", tools = "..self.inventory:getInventory("tools"))
+	end
+	
 	self:checkAcquisitions( "ore", "food", "tools" )
 	
 	if self.inventory:getInventory( "metal" ) >= self.commoditySellThreshold.metal then
@@ -197,6 +207,9 @@ end
 --Tool production rules
 ------------------------------------------------------------------------------
 function toolProduction( self )
+
+	
+
 	local hasFood = function()
 		if self.inventory:getInventory( "food" ) >= 1 then
 			return true
@@ -231,15 +244,47 @@ end
 ------------------------------------------------------------------------------
 --New constructor which randomizes each object's inventory
 ------------------------------------------------------------------------------
-randomizerConstructor = function( self, object )
+agentConstructor = function( self, object )
 	object = object or {}
 	setmetatable( object, self )
 	self.__index = self
+	
+	--------------------------------------------------------------------------
+	--range related construction
+	object.priceBelief = {
+		wood = Range:new{ mean = 3, range = 2, state = RangeState[ "Unclamped" ] },
+		tools = Range:new{ mean = 3, range = 2, state = RangeState[ "Unclamped" ]},
+		ore = Range:new{ mean = 3, range = 2, state = RangeState[ "Unclamped" ]},
+		metal = Range:new{ mean = 3, range = 2, state = RangeState[ "Unclamped" ]},
+		food = Range:new{ mean = 3, range = 2, state = RangeState[ "Unclamped" ] }
+	}
+	
+	--------------------------------------------------------------------------
+	--inventory related construction
+	object.inventory = Inventory:new{
+		stock = 
+		{
+			wood = math.random(0,50),
+			tools = math.random(0,50),
+			ore = math.random(0,50),
+			metal = math.random(0,50),
+			food = math.random(0,50)
+		},
+		limit = 
+		{
+			wood = 50,
+			tools = 50,
+			ore = 50,
+			metal = 50,
+			food = 50
+		}
+	}
 	object.inventory:setInventory( "food", math.random(0, 50) )
 	object.inventory:setInventory( "wood", math.random(0, 50) )
 	object.inventory:setInventory( "ore", math.random(0, 50) )
 	object.inventory:setInventory( "metal", math.random(0, 50) )
 	object.inventory:setInventory( "tools", math.random(0, 50) )
+	
 	return object
 end
 
@@ -310,7 +355,7 @@ BaseAgent = Agent:new{
 	productionRules = {  }	--this must be set separately
 }
 
-BaseAgent.new = randomizerConstructor
+BaseAgent.new = agentConstructor
 
 ------------------------------------------------------------------------------
 --Farmer parameters
