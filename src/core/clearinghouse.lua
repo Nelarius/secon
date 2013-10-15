@@ -63,7 +63,7 @@ function ClearingHouse:resolveOffers()
 			local seller = self.owner:getPopulation():getAgent( ask.agentID )
 			
 			if seller.inventory:getInventory( c ) == 0 then
-				print("In rejectAsk: agent "..ask.agentID.." with no "..c.. " inventory caught")
+				print("In rejectAsk: "..seller.agentType.." "..ask.agentID.." with no "..c.. " inventory caught")
 			end
 			seller:rejectAsk( c )
 			
@@ -125,10 +125,8 @@ function ClearingHouse:resolveOffers()
 			--print("continuing loop")
 			--continue the loop
 		elseif table.empty( self.bidBook[c] ) then
-			--print("rejecting asks, bidBook empty")
 			rejectAsks( c )
 		elseif table.empty( self.askBook[c] ) then
-			--print("rejecting bids, askBook empty")
 			rejectBids( c )
 			--new mean price based only on average bidded price
 			if bidVolume[c] ~= 0 then
@@ -141,15 +139,6 @@ function ClearingHouse:resolveOffers()
 			table.shuffle( self.askBook[c] )
 			table.sort( self.bidBook[c], Offer.__lt)
 			table.sort( self.askBook[c], Offer.gt)
-			
-			print("--------------BIDS--------------")
-			for _, v in ipairs( self.bidBook[c] ) do
-				print("agentID = "..v.agentID.." commodity = "..v.commodity.." quantity = "..v.quantity.." unitPrice = "..v.unitPrice)
-			end
-			print("--------------ASKS--------------")
-			for _, v in ipairs( self.askBook[c] ) do
-				print("agentID = "..v.agentID.." commodity = "..v.commodity.." quantity = "..v.quantity.." unitPrice = "..v.unitPrice)
-			end
 			
 			while ( not table.empty( self.bidBook[c] ) ) and ( not table.empty( self.askBook[c] ) ) do
 				local ask, bid = getValidOffers( c )

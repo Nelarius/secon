@@ -30,9 +30,10 @@ Agent = {
 __SIGNIFICANT = 0.4
 
 --[[
-	For anticipating supply & demand imbalance
+	For anticipating supply & demand imbalance. This value is the absolute value of the supply/demand 
+	above/under which the agent will anticipate changes.
 ]]
-__SD_IMBALANCE = 0.5
+__SD_IMBALANCE = 0.3
 
 --[[
 	For deciding when to make drastic price belief updates. The value represents the
@@ -84,12 +85,26 @@ function Agent:checkAcquisitions(...)
 	end
 end
 
+function Agent:positionInTradingRange( c, value )
+	local min = self.observedTrades[c]:getMin()
+	local max = self.observedTrades[c]:getMax() - min
+	local mean = value - min
+	
+	--scale the mean / max division, so that the result does not go to zero when the 
+	--mean is outside the immediately observed trading range.
+	local result = 1 - 0.5 * mean / max
+	if result < 0 then result = 0 end
+	if result > 1 then result = 1 end
+	
+	return result
+end
+
 function Agent:determineSaleQuantity( c )
 	local mean = self.clearingHouse:getCommodityMean( c )
 	local favorability = 1.0
 	--if there are observed trades, then calculate favorability < 1.0 to possibly save money
 	
-	if not table.empty( self.observedTrades[c] ) then
+	if not table.empty( self.observedTrades[c] ) and self.observedTrades[c]:isEmpty() then
 		local observedMean = self.observedTrades[c]:getMean()
 		if mean - observedMean < 0 then
 			local position = observedMean - mean	--make sure agent is not underselling
@@ -106,29 +121,21 @@ function Agent:determinePurchaseQuantity( c )
 	local mean = self.clearingHouse:getCommodityMean( c )
 	local favorability = 1.0
 	
-	if not table.empty( self.observedTrades[c] ) then
+	if not table.empty( self.observedTrades[c] ) and self.observedTrades[c]:isEmpty() then
 		local observedMean = self.observedTrades[c]:getMean()
-		if mean - observedMean > 0 then
-			local position = mean - observedMean	--make sure agent won't bid too much
-			local range = 0.5 * ( self.observedTrades[c]:getMax() - self.observedTrades[c]:getMin() )
-			favorability = math.min( 1.0, range / position )
+		if mean - observedMean > 0 then	--make sure the agent won't bid too much
+			favorability = self:positionInTradingRange( c, mean )
 		end
 	end
 	
 	local space = self.inventory:getLimit( c ) - self.inventory:getInventory( c )
-	--local space = self.inventoryLimit[c] - self.inventory[c]
-	return math.floor( favorability * space )
+	return math.ceil( favorability * space )
 end
 
 function Agent:createBid( c )
 	local toAcquire = self:determinePurchaseQuantity( c )
 	
 	local uPrice = self.priceBelief[c]:getRandomValue()
-
-	--print("createBid: mean = "..self.priceBelief[c]:getMean()..", range = "..self.priceBelief[c]:getRange()..", uPrice = "..uPrice )
-	--print(self.priceBelief[c]:getMean())
-	--assert( self.priceBelief[c]:getMean() >= 0)
-	--assert( uPrice > 0 )
 	
 	--check that we are not bidding for more than we can pay (based on money possessed currently)
 	if uPrice * toAcquire + self.moneyBidded > self.money and self.moneyBidded < self.money then
@@ -152,11 +159,6 @@ function Agent:createAsk( c )
 	local uPrice = self.priceBelief[c]:getRandomValue()
 	
 
-	--print("createAsk: mean = "..self.priceBelief[c]:getMean()..", range = "..self.priceBelief[c]:getRange()..", uPrice = "..uPrice )
-
-	--assert( self.priceBelief[c]:getMean() >= 0)
-	--assert( uPrice > 0 )
-	
 	self.clearingHouse:postAsk( Offer:new{ agentID = self.agentID, commodity = c,
 											quantity = toSell, unitPrice = uPrice } )
 end
@@ -197,8 +199,6 @@ function Agent:acceptAsk( c, value )
 	local mean, delta, range = self:getBeliefUpdateData( c )
 	--reinforce belief
 	--move bounds inward by 5% of the range
-	--local amount = 1 - 0.1 * self.priceBelief[c]:getMean() / self.priceBelief[c]:getRange()
-	--print("mean = "..self.priceBelief[c]:getMean()..", range = "..self.priceBelief[c]:getRange() )
 	self.priceBelief[c]:scaleRange( 0.95 )
 	
 	if delta > 0 and range / delta < __SIGNIFICANT then	--significantly undersold
@@ -210,17 +210,11 @@ function Agent:rejectAsk( c )
 	self.beliefIsUpdated[c] = true
 	local mean, delta, range = self:getBeliefUpdateData( c )
 	--increase uncertainty in price belief
-	--local amount = 1 + 0.05 * self.priceBelief[c]:getMean() / self.priceBelief[c]:getRange()
 	self.priceBelief[c]:scaleRange( 1.05 )
 	
 	--check for nearly full inventory
 	local overThr = self.inventory:getInventory( c ) - self.commoditySellThreshold[c]
-	--local overThr = self.inventory[c] - self.commoditySellThreshold[c]
 	
-	if self.inventory:getInventory( c ) < self.commoditySellThreshold[c] then
-		print("inventory for "..c.." is "..self.inventory:getInventory( c ).." with threshold "..self.commoditySellThreshold[c] )
-	end
-	assert( self.inventory:getInventory( c ) >= self.commoditySellThreshold[c] )
 	local limitThrRange = self.inventory:getLimit( c ) - self.commoditySellThreshold[c]
 	if overThr / limitThrRange > __INVENTORY_IMBALANCE then
 		--go under the global mean to ensure selling success
@@ -232,7 +226,6 @@ function Agent:rejectBid( c )
 	self.beliefIsUpdated[c] = true
 	local mean, delta, range = self:getBeliefUpdateData( c )
 	--increase uncertainty in price belief
-	--local amount = 1 + 0.05 * self.priceBelief[c]:getMean() / self.priceBelief[c]:getRange()
 	self.priceBelief[c]:scaleRange( 1.05 )
 	
 	--check for nearly empty inventory
@@ -292,13 +285,13 @@ function Agent:produce( c, amount )
 	self:depositToInventory( c, amount )
 end
 
-function Agent:consume( c, amount )
-	return self:subtractFromInventory( c, amount )
+function Agent:consume( c, amount, where )
+	return self:subtractFromInventory( c, amount, where )
 end
 
-function Agent:consumeAll( c )
+function Agent:consumeAll( c, where )
 	local amount = self.inventory:getInventory( c )
-	return self:consume( c, amount )
+	return self:consume( c, amount, where )
 end
 
 function Agent:getAgentType()

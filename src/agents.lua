@@ -143,11 +143,6 @@ end
 --Metal production rules
 ------------------------------------------------------------------------------
 function metalProduction( self )
-	if self.agentID == 67 then
-		--print("before production: metal = "..self.inventory:getInventory("metal").." ore = "..self.inventory:getInventory("ore"))
-		--print("food = "..self.inventory:getInventory("food")..", tools = "..self.inventory:getInventory("tools"))
-	end
-	
 	local hasFood = function()
 		if self.inventory:getInventory( "food" ) >= 1 then
 			return true
@@ -189,11 +184,6 @@ function metalProduction( self )
 	else
 		--penalty
 		self:subtractMoney( 2.0 )
-	end
-	
-	if self.agentID == 67 then
-		--print("after production: metal = "..self.inventory:getInventory("metal").." ore = "..self.inventory:getInventory("ore"))
-		--print("food = "..self.inventory:getInventory("food")..", tools = "..self.inventory:getInventory("tools"))
 	end
 	
 	self:checkAcquisitions( "ore", "food", "tools" )

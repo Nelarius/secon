@@ -1,5 +1,4 @@
 
-
 --[[
 	This class represents an stock, in which commodities are stored associatively
 	with their supply (integers). Same goes for the stock limits. Use-case:
@@ -23,7 +22,7 @@ end
 	is, and the stock will go to zero. The function returns the amount actually
 	subtracted.
 ]]
-function Inventory:subtractFromInventory( c, amount )
+function Inventory:subtractFromInventory( c, amount, id )
 	if amount < 0 then
 		return
 	end
@@ -38,7 +37,8 @@ function Inventory:subtractFromInventory( c, amount )
 	return result
 end
 
-function Inventory:depositToInventory( c, amount )
+function Inventory:depositToInventory( c, amount, id )
+	
 	if amount < 0 then
 		return
 	end
@@ -56,7 +56,7 @@ function Inventory:setInventory( c, value )
 	if value < 0 then
 		print("function Inventory:setInventory : value negative" )
 	end
-	assert( value > 0)
+	assert( value >= 0)
 	
 	if value > self.limit[c] then
 		self.stock[c] = self.limit[c]

@@ -1,4 +1,21 @@
 
+--[[
+	The structure of the commodity pool is the following: 
+	
+	CommodityPool = {
+		pool = {
+			"key" = value
+		},
+		
+		price = {
+			"key" = value
+		}
+	}
+	
+	We create all the key & pool values here, and their respective key & price values.
+	The keys in both tables must be the same!
+]]
+
 local commodityPool = {}
 
 commodityPool.wood = 1000
@@ -10,10 +27,10 @@ commodityPool.tools = 1000
 --define initial prices for the commodities
 local commodityPrice = {}
 
-commodityPrice.wood = 4.0
-commodityPrice.food = 4.0
-commodityPrice.ore = 4.0
-commodityPrice.metal = 5.0
+commodityPrice.wood = 3.0
+commodityPrice.food = 3.0
+commodityPrice.ore = 3.0
+commodityPrice.metal = 3.0
 commodityPrice.tools = 3.0
 
 require "core/commoditypool"

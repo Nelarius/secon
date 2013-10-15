@@ -21,24 +21,31 @@ function Population:new( object )
 	return object
 end
 
-function Population:update()
-	self.extinctTypeExists = false
+function Population:update()	
+	--update each agent, and at the same time accumulate the total profitability of each agent class
+	for _, a in ipairs( self.agents ) do
+		if a ~= nil then
+			--profit accumulators reset during perform production
+			a:performProduction()
+		end
+	end
+	self.agentLogger:log( self.agentTypes )
+end
+
+function Population:analyzeSupplyDemand()
+	--initialize tables for calculating profit
 	local agentTypeProfit = {}
 	for t in pairs( self.agentTypes ) do
 		agentTypeProfit[t] = 0.0
 	end
-	
-	--update each agent, and at the same time accumulate the total profitability of each agent class
+	--then, calculate the profit
 	for _, a in ipairs( self.agents ) do
-		if a ~= nil then
-			local key = a:getAgentType()
-			--first accumulate the profit from last turn
-			agentTypeProfit[key] = agentTypeProfit[key] + a:getProfit()
-			--and only then perform production, profit reset
-			a:performProduction()
-		end
+		--first accumulate the profit from last turn
+		local key = a:getAgentType()
+		agentTypeProfit[key] = agentTypeProfit[key] + a:getProfit()
+		--no check for nil, as bankruptcies are removed
+		a:finally()
 	end
-	
 	--iterate over agentTypeProfit: normalize profit value & get largest key
 	for t in pairs( agentTypeProfit ) do
 		if self.agentTypes[t] ~= 0 then
@@ -49,16 +56,7 @@ function Population:update()
 			self.mostProfitableType = t
 		end
 	end
-	--log stuff
 	self.profitLogger:log( agentTypeProfit )
-	self.agentLogger:log( self.agentTypes )
-end
-
-function Population:analyzeSupplyDemand()
-	for _, a in ipairs( self.agents ) do
-		--no check for nil, as bankruptcies removed
-		a:finally()
-	end
 end
 
 function Population:getMostProfitableAgentType()
@@ -123,7 +121,8 @@ function Population:removeBankruptcies()
 		if #self.extinctTypes ~= 0 then
 			local i = math.random(1, #self.extinctTypes )
 			local x = math.random()
-			t = ( x < 0.7 ) and self.extinctTypes[i] or self.mostProfitableType
+			--new type has a chance of being an extinct type or most profitable type
+			t = ( x < 0.2 ) and self.extinctTypes[i] or self.mostProfitableType
 		else
 			t = self.mostProfitableType
 		end
@@ -132,24 +131,6 @@ function Population:removeBankruptcies()
 		--obtain the prototype using the global agentAssociationTable
 		self:createAgent( agentAssociationTable[t], id )
 	end
-end
-
---[[
-	Returns a random agent type, of which there are currently none in the population.
-]]
-function Population:getExtinctType()
-	local types = {}
-	for t, v in ipairs( self.agentTypes ) do
-		if v == 0 then
-			table.insert( types, t )
-		end
-	end
-	
-	table.shuffle( types )
-	local asdf = table.remove( types )
-	print("Extinct types: "..#types )
-	print("Extinct type "..asdf.."getted.")
-	return asdf
 end
 
 function Population:getAgent( index )

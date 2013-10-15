@@ -24,6 +24,7 @@ function Zone:close()
 end
 
 function Zone:update()
+	--print("----------------A NEW ROUND-----------------")
 	self.population:update()
 	
 	self.clearingHouse:resolveOffers()

@@ -113,6 +113,21 @@ function TestFifoQOne:test10_getMeanReturnsCorrectAfterPopAndPush()
 	assertEquals( self.queue:getMean(), 2 )
 end
 
+function TestFifoQOne:test11_isEmptyReturnsFalseWithOneElementAdded()
+	assertEquals( self.queue:isEmpty(), true )
+end
+
+function TestFifoQOne:test12_isEmptyReturnsTrueWithTwoElementsAdded()
+	self.queue:enqueue(2)
+	assertEquals( self.queue:isEmpty(), false )
+end
+
+function TestFifoQOne:test13_isEmptyReturnsFalseWithTwoElementsAddedThenOneRemoved()
+	self.queue:enqueue(2)
+	self.queue:dequeue()
+	assertEquals( self.queue:isEmpty(), true )
+end
+
 ------------------------------------------------------------------------------
 --Agent tests
 ------------------------------------------------------------------------------
