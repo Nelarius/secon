@@ -2,17 +2,17 @@
 require "core/offer"
 
 ClearingHouse = {
-					bidBook = {},	--an array of offers for each commodity
-					askBook = {},	--an array of offers for each commodity
-					sdLogger = LoggerLocator.getLogger( "core/supplydemand.dat" ),
-					priceLogger = LoggerLocator.getLogger( "core/price.dat" ),
-					tradeVolumeLogger = LoggerLocator.getLogger( "core/tradevolume.dat" ),
-					bidVolumeLogger = LoggerLocator.getLogger( "core/bidvolume.dat" ),
-					askVolumeLogger = LoggerLocator.getLogger( "core/askvolume.dat" ),
-					commodityPool = {},
-					sdRatio = {},
-					owner = nil
-				}
+	bidBook = {},	--an array of offers for each commodity
+	askBook = {},	--an array of offers for each commodity
+	sdLogger = LoggerLocator.getLogger( "core/supplydemand.dat" ),
+	priceLogger = LoggerLocator.getLogger( "core/price.dat" ),
+	tradeVolumeLogger = LoggerLocator.getLogger( "core/tradevolume.dat" ),
+	bidVolumeLogger = LoggerLocator.getLogger( "core/bidvolume.dat" ),
+	askVolumeLogger = LoggerLocator.getLogger( "core/askvolume.dat" ),
+	commodityPool = {},
+	sdRatio = {},
+	owner = nil
+}
 
 function ClearingHouse:new( object )
 	object = object or {}
@@ -47,10 +47,10 @@ function ClearingHouse:resolveOffers()
 	local price = {}
 	--for calculating supply & demand
 	local askVolume = {}
-	--for keeping track of who has traded & the number of trades
-	local agentsTraded = {}
-	local traderCount = 0
-	local bidCount = 0
+	--for keeping track of who has traded & the number of trades; for price calculation
+	local traderCount = {}
+	local askerCount = {}	--stores on a commodity basis the number of agents selling
+	local bidderCount = {}  --stores on a commodity basis the number of agents bidding
 	
 	--define helper functions for algorithm
 	
@@ -67,6 +67,7 @@ function ClearingHouse:resolveOffers()
 			end
 			seller:rejectAsk( c )
 			
+			askerCount[c] = askerCount[c] + 1
 			askVolume[c] = askVolume[c] + ask.quantity
 		end
 	end
@@ -81,9 +82,7 @@ function ClearingHouse:resolveOffers()
 			local buyer = self.owner:getPopulation():getAgent( bid.agentID )
 			buyer:rejectBid( c )
 			
-			if not agentsTraded[ buyer.agentID ] then
-				bidCount = bidCount + 1
-			end
+			bidderCount[c] = bidderCount[c] + 1
 			
 			bidAverage[c] = bidAverage[c] + bid.quantity * bid.unitPrice
 			bidVolume[c] = bidVolume[c] + bid.quantity
@@ -120,6 +119,10 @@ function ClearingHouse:resolveOffers()
 		price[c] = 0
 		askVolume[c] = 0
 		self.sdRatio[c] = 0
+		traderCount[c] = 0
+		askerCount[c] = 0
+		bidderCount[c] = 0
+		
 		
 		if table.empty( self.bidBook[c] ) and table.empty( self.askBook[c] ) then
 			--print("continuing loop")
@@ -168,17 +171,7 @@ function ClearingHouse:resolveOffers()
 					
 				seller:acceptAsk( c, clearingPrice )
 				buyer:acceptBid( c, clearingPrice )
-					
-				if not agentsTraded[ seller.agentID ] then
-					traderCount = traderCount + 1
-					agentsTraded[ seller.agentID ] = true
-				end
-					
-				if not agentsTraded[ buyer.agentID ] then
-					traderCount = traderCount + 1
-					bidCount = bidCount + 1
-					agentsTraded[ buyer.agentID ] = true
-				end
+				traderCount[c] = traderCount[c] + 2
 			end
 			
 			--reject any remaining offers
@@ -190,7 +183,8 @@ function ClearingHouse:resolveOffers()
 				tradeAverage[c] = tradeAverage[c] / tradeVolume[c]
 				bidAverage[c] = bidAverage[c] / bidVolume[c]
 				
-				local fraction = traderCount / self.owner:getPopulation():getPopulationCount()
+				local total = askerCount[c] + bidderCount[c] + traderCount[c]
+				local fraction = traderCount[c] / total
 				price[c] = fraction * tradeAverage[c] + ( 1 - fraction ) * bidAverage[c]
 				self.commodityPool:setCommodityMean( c, price[c] )
 			end
@@ -209,27 +203,54 @@ function ClearingHouse:resolveOffers()
 	self.askVolumeLogger:log( askVolume )
 end
 
+--[[
+	Returns the current mean price of commodity c.
+]]
 function ClearingHouse:getCommodityMean( c )
 	return self.commodityPool:getCommodityMean( c )
 end
 
+--[[
+	Returns the supply/demand ratio for commodity c. The supply/demand ratio is in the range [ -1, 1 ],
+	and has the following meaning:
+	
+	1: full supply, -1: full demand, 0: balanced
+]]
 function ClearingHouse:getSupplyDemandRatio( c )
 	return self.sdRatio[c]
 end
 
 require "core/utils"
 
+--[[
+	Returns a the commodity pool table.
+]]
 function ClearingHouse:getCommodities()
 	return self.commodityPool:getCommodities()
 end
 
-function ClearingHouse:getCommodity( c, amount )
-	return self.commodityPool:getCommodity( c, amount )
+--[[
+	Fetch a number of a given commodity c, specified by amount. Function returns amount if 
+	there is enough of given commodity, or else, whatever is left of a given commodity.
+]]
+function ClearingHouse:fetchCommodity( c, amount )
+	return self.commodityPool:fetchCommodity( c, amount )
 end
 
+--[[
+	Set the pool - table of commodityPool.
+]]
 function ClearingHouse:setCommodityPool( pool )
 	check( "setCommodityPool", "table", pool, "pool" )
 	self.commodityPool = pool
+end
+
+--[[
+	Returns a table with the last three values of the mean price of commodity c.
+	The first value in the array is the latest price.
+]]
+function ClearingHouse:getHistory( c )
+	return self.commodityPool:getHistory( c )
 end
 
 function ClearingHouse:setOwner( owner )

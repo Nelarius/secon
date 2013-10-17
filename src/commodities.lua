@@ -9,7 +9,8 @@
 		
 		price = {
 			"key" = value
-		}
+		},
+		history = {}
 	}
 	
 	We create all the key & pool values here, and their respective key & price values.
@@ -27,11 +28,11 @@ commodityPool.tools = 10000
 --define initial prices for the commodities
 local commodityPrice = {}
 
-commodityPrice.wood = 3.0
-commodityPrice.food = 3.0
-commodityPrice.ore = 3.0
+commodityPrice.wood = 2.0
+commodityPrice.food = 4.0
+commodityPrice.ore = 5.0
 commodityPrice.metal = 3.0
-commodityPrice.tools = 3.0
+commodityPrice.tools = 2.5
 
 require "core/commoditypool"
 

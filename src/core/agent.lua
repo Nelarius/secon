@@ -7,7 +7,7 @@ require "core/clearinghouse"
 --[[
 	The structure of this class is the following:
 	
-	MinimalAgent = {
+	Agent = {
 		agentID = value,
 		agentType = string,
 		priceBelief = Range:new{
@@ -380,13 +380,13 @@ function MinimalAgent:performProduction()		end
 
 function MinimalAgent:finally()					end
 
-function MinimalAgent:acceptBid( c )			end
+function MinimalAgent:acceptBid( c, value )		end
 
-function MinimalAgent:acceptAsk( c )			end
+function MinimalAgent:acceptAsk( c, value )		end
 
-function MinimalAgent:rejectBid( c )			end
+function MinimalAgent:rejectBid( c, value )		end
 
-function MinimalAgent:rejectAsk( c )			end
+function MinimalAgent:rejectAsk( c, value )		end
 
 MinimalAgent.subtractMoney = Agent.subtractMoney
 
@@ -395,6 +395,8 @@ MinimalAgent.depositMoney = Agent.depositMoney
 MinimalAgent.subtractFromInventory = Agent.subtractFromInventory
 
 MinimalAgent.depositToInventory = Agent.depositToInventory
+
+MinimalAgent.declareBankruptcy = Agent.declareBankruptcy
 
 MinimalAgent.getAgentType = Agent.getAgentType
 

@@ -82,3 +82,21 @@ function Inventory:setLimit( c, value )
 	self.limit[c] = value
 end
 
+function Inventory:getSpace( c )
+	return self.limit[c] - self.stock[c]
+end
+
+function Inventory:hasSpace( c )
+	if self.stock[c] < self.limit[c] then
+		return true
+	end
+	return false
+end
+
+function Inventory:isStockEmpty( c )
+	if self.stock[c] == 0 then
+		return true
+	end
+	return false
+end
+

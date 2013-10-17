@@ -75,6 +75,7 @@ function TestZone:initialize()
 	end
 	
 	self.population:createAgent( DERspeculator )
+	self.population:createAgent( AVGspeculator )
 end
 
 function TestZone:close()

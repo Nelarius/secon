@@ -1,5 +1,6 @@
 
 require "core/agent"
+require "core/speculator"
 require "core/range"
 require "core/inventory"
 
@@ -110,7 +111,7 @@ function oreProduction( self )
 		--produce 4 units of ore
 		--consume 1 unit of food
 		--break tool with prob 0.5
-		self:produce( "ore", self.clearingHouse:getCommodity( "ore", 4 ) )
+		self:produce( "ore", self.clearingHouse:fetchCommodity( "ore", 4 ) )
 		self:consume( "food", 1 )
 		local x = math.random()
 		if x < 0.5 then
@@ -119,7 +120,7 @@ function oreProduction( self )
 	elseif hasFood() then
 		--produce 2 units of ore
 		--consume 1 unit of food
-		self:produce( "ore", self.clearingHouse:getCommodity( "ore", 4 ) )
+		self:produce( "ore", self.clearingHouse:fetchCommodity( "ore", 4 ) )
 		self:consume( "food", 1 )
 	else
 		--penalty
@@ -390,6 +391,7 @@ agentAssociationTable = {
 							["Miner"] = Miner,
 							["Refiner"] = Refiner,
 							["Blacksmith"] = Blacksmith,
-							["DERspeculator"] = DERspeculator
+							["DERspeculator"] = DERspeculator,
+							["AVGspeculator"] = AVGspeculator
 						}
 						

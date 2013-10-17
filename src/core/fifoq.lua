@@ -146,9 +146,37 @@ function FifoQ:getMax()
 	return self.max
 end
 
+--[[
+	Time complexity: O( count )
+	
+	Returns an array containing all the values in the queue. 
+	The latest value is the first one in the array.
+]]
+function FifoQ:getValues()
+	local vals = {}
+	local node = self.head
+	while node do
+		table.insert( vals, node.value )
+		node = node.previous
+	end
+	
+	return vals
+end
+
+--[[
+	Returns true if the count is 1 or 2 (therefore getMax, getMin and getMean are meaningless). Otherwise,
+	returns true.
+]]
 function FifoQ:isEmpty()
 	if self.count >= 2 then
 		return false
 	end
 	return true
+end
+
+--[[
+	Returns the current number of elements in queue.
+]]
+function FifoQ:getLength()
+	return self.count
 end
