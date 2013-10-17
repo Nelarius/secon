@@ -47,6 +47,7 @@ end
 ------------------------------------------------------------------------------
 local pool = require "commodities"
 require "agents"
+require "core/speculator"
 
 TestZone = Zone:new()
 
@@ -72,6 +73,8 @@ function TestZone:initialize()
 	for i = 1, 100, 1 do
 		self.population:createAgent( Blacksmith )
 	end
+	
+	self.population:createAgent( DERspeculator )
 end
 
 function TestZone:close()

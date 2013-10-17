@@ -71,7 +71,6 @@ function Population:createAgent( prototype, index )
 	end
 	
 	local agent = prototype:new()
-	agent.owner = self.owner
 	agent.clearingHouse = self.owner:getClearingHouse()
 	agent.population = self
 	local stringID = agent.agentType

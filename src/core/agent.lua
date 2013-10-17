@@ -4,6 +4,45 @@ require "core/utils"
 require "core/fifoq"
 require "core/clearinghouse"
 
+--[[
+	The structure of this class is the following:
+	
+	MinimalAgent = {
+		agentID = value,
+		agentType = string,
+		priceBelief = Range:new{
+			mean = value,
+			range = value,
+			state = State["Unclamped"]
+		},
+		observedTrades = {},
+		inventory = Inventory:new{
+			stock = {
+				"key" = value
+			},
+			
+			limit = {
+				"key" = value
+			}
+		},
+		commoditySellThreshold = {
+			"key" = value
+		},
+		commodityAcquireThreshold = {
+			"key" = value
+		},
+		money = value,
+		profit = value,
+		moneyBidded = value,
+		beliefIsUpdated = {
+			"key" = boolean		Remark: the boolean should be false initially
+		},
+		population = [reference to population instance owning this agent],
+		clearingHouse = [reference to responsible clearing house instance],
+		productionRules = {}	Remark: insert production rules here when instancing
+	}
+]]
+
 Agent = {
 			agentID = 0,
 			agentType = "",
@@ -12,12 +51,10 @@ Agent = {
 			inventory = {},
 			commoditySellThreshold = {},
 			commodityAcquireThreshold = {},
-			inventoryLimit = {},
 			money = 0.0,
 			profit = 0.0,
 			moneyBidded = 0.0,	--used for making sure the agent does not bid for more than it can spend
 			beliefIsUpdated = {},
-			owner = nil,	--is this variable needed?
 			population = nil,
 			clearingHouse = nil,
 			productionRules = {}
@@ -301,4 +338,65 @@ end
 function Agent:getProfit()
 	return self.profit
 end
+
+------------------------------------------------------------------------------
+--An empty agent class which contains the minimum interface required to work with 
+--the clearing house. This agent will not make any price belief updates, anticipate any
+--supply/demand changes, nor perform any production. This agent will only know how to 
+--deposit/subtract money/inventory.
+------------------------------------------------------------------------------
+
+--[[
+	The structure of this class is the following:
+	
+	MinimalAgent = {
+		agentID = value,
+		agentType = string,
+		inventory = Inventory:new{
+			stock = {
+				"key" = value
+			},
+			
+			limit = {
+				"key" = value
+			}
+		},
+		money = value,
+		profit = value,
+		population = [reference to population instance owning this agent],
+		clearingHouse = [reference to responsible clearing house instance]
+	}
+]]
+MinimalAgent = {}
+
+function MinimalAgent:new( o )
+	o = o or {}
+	setmetatable(  o, self )
+	self.__index = self
+	return o
+end
+
+function MinimalAgent:performProduction()		end
+
+function MinimalAgent:finally()					end
+
+function MinimalAgent:acceptBid( c )			end
+
+function MinimalAgent:acceptAsk( c )			end
+
+function MinimalAgent:rejectBid( c )			end
+
+function MinimalAgent:rejectAsk( c )			end
+
+MinimalAgent.subtractMoney = Agent.subtractMoney
+
+MinimalAgent.depositMoney = Agent.depositMoney
+
+MinimalAgent.subtractFromInventory = Agent.subtractFromInventory
+
+MinimalAgent.depositToInventory = Agent.depositToInventory
+
+MinimalAgent.getAgentType = Agent.getAgentType
+
+MinimalAgent.getProfit = Agent.getProfit
 

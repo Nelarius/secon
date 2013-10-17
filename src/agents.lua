@@ -237,11 +237,11 @@ agentConstructor = function( self, object )
 	--------------------------------------------------------------------------
 	--range related construction
 	object.priceBelief = {
-		wood = Range:new{ mean = 3, range = 2, state = RangeState[ "Unclamped" ] },
-		tools = Range:new{ mean = 3, range = 2, state = RangeState[ "Unclamped" ]},
-		ore = Range:new{ mean = 3, range = 2, state = RangeState[ "Unclamped" ]},
-		metal = Range:new{ mean = 3, range = 2, state = RangeState[ "Unclamped" ]},
-		food = Range:new{ mean = 3, range = 2, state = RangeState[ "Unclamped" ] }
+		wood = Range:new{ mean = math.random_range(2,4), range = math.random_range(1.5,2.5), state = RangeState[ "Unclamped" ] },
+		tools = Range:new{ mean = math.random_range(2,4), range = math.random_range(1.5,2.5), state = RangeState[ "Unclamped" ] },
+		ore = Range:new{ mean = math.random_range(2,4), range = math.random_range(1.5,2.5), state = RangeState[ "Unclamped" ] },
+		metal = Range:new{ mean = math.random_range(2,4), range = math.random_range(1.5,2.5), state = RangeState[ "Unclamped" ] },
+		food = Range:new{ mean = math.random_range(2,4), range = math.random_range(1.5,2.5), state = RangeState[ "Unclamped" ] },
 	}
 	
 	--------------------------------------------------------------------------
@@ -251,7 +251,7 @@ agentConstructor = function( self, object )
 		{
 			wood = math.random(0,50),
 			tools = math.random(0,50),
-			ore = 0,	--math.random(0,50),
+			ore = math.random(0,50),	--math.random(0,50),
 			metal = math.random(0,50),
 			food = math.random(0,50)
 		},
@@ -390,5 +390,6 @@ agentAssociationTable = {
 							["Miner"] = Miner,
 							["Refiner"] = Refiner,
 							["Blacksmith"] = Blacksmith,
+							["DERspeculator"] = DERspeculator
 						}
 						
