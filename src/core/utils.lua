@@ -34,6 +34,25 @@ function table.empty(t)
 	return false
 end
 
+--[[
+	Assuming a table with key - number pairs, this function will return the sum
+	of every value in the table.
+]]
+function table.sum( t )
+	local sum = 0
+	for _, v in ipairs( t ) do
+		sum = sum + v
+	end
+	return sum
+end
+
+--[[
+	Returns a random floating-point value in the range [ a, b ].
+]]
+function math.random_range( a, b )
+	return ( b - a ) * math.random() + a
+end
+
 
 --[[
 	This function checks for NANs.
